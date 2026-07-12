@@ -215,7 +215,7 @@ local CreatorInfo = CreditTab:CreateParagraph({
 local DiscordButton = CreditTab:CreateButton({
     Name = "Copy Discord Link",
     Callback = function()
-        local discordLink = "https://discord.gg/yourinvite" -- thay link discord thật của bạn
+        local discordLink = "sorry ,discord server coming soon" -- thay link discord thật của bạn
 
         if setclipboard then
             setclipboard(discordLink)
