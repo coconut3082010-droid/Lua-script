@@ -5,7 +5,7 @@ local Window = Rayfield:CreateWindow({
    Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
    LoadingTitle = "draw a sleigh & slide dowhill script",
    LoadingSubtitle = "by Coconut",
-   ShowText = "draw a sleigh & slide downhill script", -- for mobile users to unhide Rayfield, change if you'd like
+   ShowText = "script", -- for mobile users to unhide Rayfield, change if you'd like
    Theme = "DarkBlue", -- Check https://docs.sirius.menu/rayfield/configuration/themes
 
    ToggleUIKeybind = "K", -- The keybind to toggle the UI visibility (string like "K" or Enum.KeyCode)
