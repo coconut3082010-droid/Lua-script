@@ -57,9 +57,9 @@ local CashInput = StatsTab:CreateInput({
             CashAmount = math.clamp(amount, 1, 9999)
         else
             Rayfield:Notify({
-                Title = "Lỗi",
-                Content = "Vui lòng nhập một số hợp lệ",
-                Duration = 3
+                Title = "error",
+                Content = "please enter a valid number",
+                Duration = 2
             })
         end
     end,
@@ -75,9 +75,9 @@ local CashButton = StatsTab:CreateButton({
             :FireServer(unpack(args))
 
         Rayfield:Notify({
-            Title = "Thành công",
-            Content = "Đã gửi yêu cầu " .. CashAmount .. " tiền",
-            Duration = 3
+            Title = "success",
+            Content = " gived money " .. CashAmount .. " tiền",
+            Duration = 2
         })
     end,
 })
@@ -99,9 +99,9 @@ local BoostInput = StatsTab:CreateInput({
             boostAmount = math.clamp(amount, 1, 9999)
         else
             Rayfield:Notify({
-                Title = "Lỗi",
-                Content = "Vui lòng nhập một số hợp lệ",
-                Duration = 3
+                Title = "error",
+                Content = "please enter a valid nunber",
+                Duration = 2
             })
         end
     end,
@@ -117,18 +117,18 @@ local BoostButton = StatsTab:CreateButton({
             :FireServer(unpack(args))
 
         Rayfield:Notify({
-            Title = "Thành công",
-            Content = "Đã gửi yêu cầu " .. boostAmount .. " boost",
+            Title = "success",
+            Content = "gived boost " .. boostAmount .. " boost",
             Duration = 3
         })
     end,
 })
 
 -- ===================== TAB: FREE =====================
-local FreeTab = Window:CreateTab("free", "sparkles")
+local FreegamepassTab = Window:CreateTab("freegamepass", "sparkles")
 
 local RemoveScriptButton = FreeTab:CreateButton({
-    Name = "Xóa LocalScript trong Golden Ski Poles",
+    Name = "get free Golden Ski Poles gamepass",
     Callback = function()
         local player = game.Players.LocalPlayer
         local tool = player.Backpack:FindFirstChild("Golden Ski Poles")
@@ -139,21 +139,21 @@ local RemoveScriptButton = FreeTab:CreateButton({
             if script1 then
                 script1:Destroy()
                 Rayfield:Notify({
-                    Title = "Thành công",
-                    Content = "Đã xóa LocalScript",
+                    Title = "success",
+                    Content = "you now can use Golden Ski Poles",
                     Duration = 3
                 })
             else
                 Rayfield:Notify({
-                    Title = "Thông báo",
-                    Content = "Không tìm thấy LocalScript trong tool",
+                    Title = "notification",
+                    Content = "you already use free gamepass",
                     Duration = 3
                 })
             end
         else
             Rayfield:Notify({
-                Title = "Lỗi",
-                Content = "Không tìm thấy tool",
+                Title = "error",
+                Content = "don't found Golden Ski Poles in your inventory",
                 Duration = 3
             })
         end
