@@ -140,7 +140,7 @@ local RemoveScriptButton = FreegamepassTab:CreateButton({
                 script1:Destroy()
                 Rayfield:Notify({
                     Title = "success",
-                    Content = "you now can use Golden Ski Poles",
+                    Content = "you now can use Golden Ski Poles,gamepass will reset when you die",
                     Duration = 3
                 })
             else
