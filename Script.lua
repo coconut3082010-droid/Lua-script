@@ -124,7 +124,7 @@ local BoostButton = StatsTab:CreateButton({
     end,
 })
 
--- ===================== TAB: FREE =====================
+-- ===================== TAB: FREEGAMEPASS =====================
 local FreegamepassTab = Window:CreateTab("freegamepass", "sparkles")
 
 local RemoveScriptButton = FreegamepassTab:CreateButton({
@@ -156,6 +156,51 @@ local RemoveScriptButton = FreegamepassTab:CreateButton({
                 Content = "don't found Golden Ski Poles in your inventory",
                 Duration = 3
             })
+        end
+    end,
+})
+-- ===================== TAB: LOCAL PLAYER =====================
+local LocalPlayerTab = Window:CreateTab("local player", "user")
+
+-- ---- Speed Slider ----
+local SpeedSlider = LocalPlayerTab:CreateSlider({
+    Name = "WalkSpeed",
+    Range = {16, 200},
+    Increment = 1,
+    Suffix = "speed",
+    CurrentValue = 16,
+    Flag = "WalkSpeedSlider",
+    Callback = function(Value)
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.WalkSpeed = Value
+        end
+    end,
+})
+
+-- ---- Infinity Jump Toggle ----
+local InfinityJumpEnabled = false
+local jumpConnection
+
+local InfinityJumpToggle = LocalPlayerTab:CreateToggle({
+    Name = "Infinity Jump",
+    CurrentValue = false,
+    Flag = "InfinityJumpToggle",
+    Callback = function(Value)
+        InfinityJumpEnabled = Value
+
+        if InfinityJumpEnabled then
+            jumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function()
+                local char = game.Players.LocalPlayer.Character
+                if char and char:FindFirstChild("Humanoid") then
+                    char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+                end
+            end)
+        else
+            if jumpConnection then
+                jumpConnection:Disconnect()
+                jumpConnection = nil
+            end
         end
     end,
 })
