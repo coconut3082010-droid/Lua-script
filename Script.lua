@@ -81,3 +81,46 @@ local Button = Tab:CreateButton({
         })
     end,
 })
+local Section = Tab:CreateSection("get boost")
+-- Biến lưu giá trị nhập
+local boostAmount = 1 -- giá trị mặc định
+
+-- Ô nhập chỉ để LƯU giá trị, không chạy chức năng
+local Input = Tab:CreateInput({
+    Name = "get boost",
+    CurrentValue = "1",
+    PlaceholderText = "how many boost you want",
+    RemoveTextAfterFocusLost = true,
+    Flag = "give boost",
+    Callback = function(Text)
+        local amount = tonumber(Text)
+        if amount then
+            Cash
+         
+            boostAmount = math.clamp(amount, 1, 9999)
+        else
+            Rayfield:Notify({
+                Title = "Lỗi",
+                Content = "Vui lòng nhập một số hợp lệ",
+                Duration = 3
+            })
+        end
+    end,
+})
+
+-- Nút bấm mới CHẠY function, dùng giá trị đã lưu
+local Button = Tab:CreateButton({
+    Name = "Confirm",
+    Callback = function()
+        local args = {
+	boostAmount
+}
+game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("ApplyBoost"):FireServer(unpack(args))
+
+        Rayfield:Notify({
+            Title = "Thành công",
+            Content = "Đã gửi yêu cầu " .. CashAmount .. " tiền",
+            Duration = 3
+        })
+    end,
+})
