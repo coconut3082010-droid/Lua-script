@@ -204,3 +204,32 @@ local InfinityJumpToggle = LocalPlayerTab:CreateToggle({
         end
     end,
 })
+-- ===================== TAB: CREDIT =====================
+local CreditTab = Window:CreateTab("credit", "info")
+
+local CreatorInfo = CreditTab:CreateParagraph({
+    Title = "creator",
+    Content = "Coconut on discord" -- thay bằng tên bạn muốn hiển thị
+})
+
+local DiscordButton = CreditTab:CreateButton({
+    Name = "Copy Discord Link",
+    Callback = function()
+        local discordLink = "https://discord.gg/yourinvite" -- thay link discord thật của bạn
+
+        if setclipboard then
+            setclipboard(discordLink)
+            Rayfield:Notify({
+                Title = "Discord",
+                Content = "Link discord copy to clipboard",
+                Duration = 3
+            })
+        else
+            Rayfield:Notify({
+                Title = "error",
+                Content = "Executor doest support copy link",
+                Duration = 3
+            })
+        end
+    end,
+})
