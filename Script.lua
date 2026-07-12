@@ -127,7 +127,7 @@ local BoostButton = StatsTab:CreateButton({
 -- ===================== TAB: FREE =====================
 local FreegamepassTab = Window:CreateTab("freegamepass", "sparkles")
 
-local RemoveScriptButton = FreeTab:CreateButton({
+local RemoveScriptButton = FreegamepassTab:CreateButton({
     Name = "get free Golden Ski Poles gamepass",
     Callback = function()
         local player = game.Players.LocalPlayer
