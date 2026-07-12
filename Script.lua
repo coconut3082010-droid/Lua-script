@@ -13,8 +13,6 @@ local Window = Rayfield:CreateWindow({
    DisableRayfieldPrompts = true,
    DisableBuildWarnings = false, -- Prevents Rayfield from emitting warnings when the script has a version mismatch with the interface.
 
-   -- ScriptID = "sid_xxxxxxxxxxxx", -- Your Script ID from developer.sirius.menu — enables analytics, managed keys, and script hosting
-
    ConfigurationSaving = {
       Enabled = false,
       FolderName = nil, -- Create a custom folder for your hub/game
@@ -38,13 +36,16 @@ local Window = Rayfield:CreateWindow({
       Key = {"Hello"} -- List of keys that the system will accept, can be RAW file links (pastebin, github, etc.) or simple strings ("hello", "key22")
    }
 })
-local Tab = Window:CreateTab("get money", "dollar-sign")
-local Section = Tab:CreateSection("get money")
--- Biến lưu giá trị nhập
+
+-- ===================== TAB: GET STATS =====================
+local StatsTab = Window:CreateTab("get stats", "dollar-sign")
+
+-- ---- Section: Get Money ----
+local MoneySection = StatsTab:CreateSection("get money")
+
 local CashAmount = 1 -- giá trị mặc định
 
--- Ô nhập chỉ để LƯU giá trị, không chạy chức năng
-local Input = Tab:CreateInput({
+local CashInput = StatsTab:CreateInput({
     Name = "Give Money",
     CurrentValue = "1",
     PlaceholderText = "how many cash you want (max:9999)",
@@ -64,9 +65,8 @@ local Input = Tab:CreateInput({
     end,
 })
 
--- Nút bấm mới CHẠY function, dùng giá trị đã lưu
-local Button = Tab:CreateButton({
-    Name = "Confirm",
+local CashButton = StatsTab:CreateButton({
+    Name = "Confirm Money",
     Callback = function()
         local args = { CashAmount }
         game:GetService("ReplicatedStorage")
@@ -81,10 +81,13 @@ local Button = Tab:CreateButton({
         })
     end,
 })
-local Section2 = Tab:CreateSection("get boost")
-local boostAmount = 1
 
-local BoostInput = Tab:CreateInput({
+-- ---- Section: Get Boost ----
+local BoostSection = StatsTab:CreateSection("get boost")
+
+local boostAmount = 1 -- giá trị mặc định
+
+local BoostInput = StatsTab:CreateInput({
     Name = "get boost",
     CurrentValue = "1",
     PlaceholderText = "how many boost you want",
@@ -104,8 +107,8 @@ local BoostInput = Tab:CreateInput({
     end,
 })
 
-local BoostButton = Tab:CreateButton({
-    Name = "Confirm",
+local BoostButton = StatsTab:CreateButton({
+    Name = "Confirm Boost",
     Callback = function()
         local args = { boostAmount }
         game:GetService("ReplicatedStorage")
@@ -118,5 +121,41 @@ local BoostButton = Tab:CreateButton({
             Content = "Đã gửi yêu cầu " .. boostAmount .. " boost",
             Duration = 3
         })
+    end,
+})
+
+-- ===================== TAB: FREE =====================
+local FreeTab = Window:CreateTab("free", "sparkles")
+
+local RemoveScriptButton = FreeTab:CreateButton({
+    Name = "Xóa LocalScript trong Golden Ski Poles",
+    Callback = function()
+        local player = game.Players.LocalPlayer
+        local tool = player.Backpack:FindFirstChild("Golden Ski Poles")
+            or (player.Character and player.Character:FindFirstChild("Golden Ski Poles"))
+
+        if tool then
+            local script1 = tool:FindFirstChild("LocalScript")
+            if script1 then
+                script1:Destroy()
+                Rayfield:Notify({
+                    Title = "Thành công",
+                    Content = "Đã xóa LocalScript",
+                    Duration = 3
+                })
+            else
+                Rayfield:Notify({
+                    Title = "Thông báo",
+                    Content = "Không tìm thấy LocalScript trong tool",
+                    Duration = 3
+                })
+            end
+        else
+            Rayfield:Notify({
+                Title = "Lỗi",
+                Content = "Không tìm thấy tool",
+                Duration = 3
+            })
+        end
     end,
 })
