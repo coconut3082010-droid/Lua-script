@@ -123,6 +123,22 @@ local BoostButton = StatsTab:CreateButton({
         })
     end,
 })
+local RocketButton = StatsTab:CreateButton({
+    Name = "Get Rocket",
+    Callback = function()
+        local args = { 1 }
+        game:GetService("ReplicatedStorage")
+            :WaitForChild("Events")
+            :WaitForChild("AwardRocket")
+            :FireServer(unpack(args))
+
+        Rayfield:Notify({
+            Title = "success",
+            Content = "gived rocket",
+            Duration = 3
+        })
+    end,
+})
 
 -- ===================== TAB: FREEGAMEPASS =====================
 local FreegamepassTab = Window:CreateTab("freegamepass", "sparkles")
