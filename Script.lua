@@ -123,6 +123,8 @@ local BoostButton = StatsTab:CreateButton({
         })
     end,
 })
+local RocketSection = StatsTab:CreateSection("get rocket")
+
 local RocketButton = StatsTab:CreateButton({
     Name = "Get Rocket",
     Callback = function()
