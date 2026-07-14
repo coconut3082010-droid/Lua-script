@@ -22,7 +22,7 @@ local Window = Rayfield:CreateWindow({
    KeySystem = false, KeySettings = { Title = "Untitled", Subtitle = "Key System", Note = "No method of obtaining the key is provided", FileName = "Key", SaveKey = true, GrabKeyFromSite = false, Key = {"Hello"} }
 })
 
--- ===================== TAB: GET STATS =====================
+-- TAB: GET STATS
 local StatsTab = Window:CreateTab("get stats", "dollar-sign")
 local MoneySection = StatsTab:CreateSection("get money")
 local CashAmount = 1
@@ -37,18 +37,18 @@ local BoostButton = StatsTab:CreateButton({ Name = "Confirm Boost", Callback = f
 local RocketSection = StatsTab:CreateSection("get rocket")
 local RocketButton = StatsTab:CreateButton({ Name = "Get Rocket", Callback = function() game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("AwardRocket"):FireServer(1) Rayfield:Notify({Title = "success", Content = "gived rocket", Duration = 3}) end })
 
--- ===================== TAB: FREEGAMEPASS =====================
+-- TAB: FREEGAMEPASS
 local FreegamepassTab = Window:CreateTab("freegamepass", "sparkles")
 local RemoveScriptButton = FreegamepassTab:CreateButton({ Name = "get free Golden Ski Poles gamepass", Callback = function() local player = Players.LocalPlayer local tool = player.Backpack:FindFirstChild("Golden Ski Poles") or (player.Character and player.Character:FindFirstChild("Golden Ski Poles")) if tool then local script1 = tool:FindFirstChild("LocalScript") if script1 then script1:Destroy() Rayfield:Notify({Title = "success", Content = "you now can use Golden Ski Poles,gamepass will reset when you die", Duration = 3}) else Rayfield:Notify({Title = "notification", Content = "you already use free gamepass", Duration = 3}) end else Rayfield:Notify({Title = "error", Content = "don't found Golden Ski Poles in your inventory", Duration = 3}) end end })
 
--- ===================== TAB: LOCAL PLAYER =====================
+-- TAB: LOCAL PLAYER
 local LocalPlayerTab = Window:CreateTab("local player", "user")
 local SpeedSlider = LocalPlayerTab:CreateSlider({ Name = "WalkSpeed", Range = {16, 200}, Increment = 1, Suffix = "speed", CurrentValue = 16, Flag = "WalkSpeedSlider", Callback = function(Value) local char = Players.LocalPlayer.Character if char and char:FindFirstChild("Humanoid") then char.Humanoid.WalkSpeed = Value end end })
 local InfinityJumpEnabled = false
 local jumpConnection
 local InfinityJumpToggle = LocalPlayerTab:CreateToggle({ Name = "Infinity Jump", CurrentValue = false, Flag = "InfinityJumpToggle", Callback = function(Value) InfinityJumpEnabled = Value if InfinityJumpEnabled then jumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function() local char = Players.LocalPlayer.Character if char and char:FindFirstChild("Humanoid") then char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end end) else if jumpConnection then jumpConnection:Disconnect(); jumpConnection = nil end end end })
 
--- ===================== TAB: CREDIT =====================
+-- TAB: CREDIT
 local CreditTab = Window:CreateTab("credit", "info")
 local CreatorInfo = CreditTab:CreateParagraph({ Title = "creator", Content = "Coconut on discord" })
 local DiscordButton = CreditTab:CreateButton({ Name = "Copy Discord Link", Callback = function() local discordLink = "sorry ,discord server coming soon" if setclipboard then setclipboard(discordLink) Rayfield:Notify({Title = "Discord", Content = "Link discord copy to clipboard", Duration = 3}) else Rayfield:Notify({Title = "error", Content = "Executor doest support copy link", Duration = 3}) end end })
@@ -60,12 +60,14 @@ local function showCreatorPopup(player)
     screenGui.ResetOnSpawn = false
     screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     screenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+    
     local backdrop = Instance.new("Frame")
     backdrop.Size = UDim2.fromScale(1, 1)
     backdrop.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     backdrop.BackgroundTransparency = 1
     backdrop.ZIndex = 10
     backdrop.Parent = screenGui
+    
     local card = Instance.new("Frame")
     card.Size = UDim2.fromOffset(360, 220)
     card.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -75,6 +77,7 @@ local function showCreatorPopup(player)
     card.ZIndex = 11
     card.Parent = screenGui
     Instance.new("UICorner", card).CornerRadius = UDim.new(0, 14)
+    
     local cardStroke = Instance.new("UIStroke", card)
     cardStroke.Color = Color3.fromRGB(70, 130, 255); cardStroke.Thickness = 1.5; cardStroke.Transparency = 1
     
@@ -115,11 +118,13 @@ Players.PlayerAdded:Connect(onPlayerAdded)
 -- ===================== PHẦN 3: CLIENT HEAD TAG =====================
 local TARGET_USERNAME = "rei123456rmrmrjmndf"
 local activeConnections = {} 
+
 local function attachTagToTarget(targetPlayer)
     local character = targetPlayer.Character
     if not character then return end
     local head = character:WaitForChild("Head", 10)
     if not head then return end
+    
     local oldTag = head:FindFirstChild("ClientCreatorTag")
     if oldTag then oldTag:Destroy() end
     if activeConnections[targetPlayer] then activeConnections[targetPlayer]:Disconnect(); activeConnections[targetPlayer] = nil end
@@ -155,23 +160,22 @@ local function setupTargetTracking(targetPlayer)
     if targetPlayer.Character then task.spawn(function() attachTagToTarget(targetPlayer) end) end
     targetPlayer.CharacterAdded:Connect(function() task.wait(1) attachTagToTarget(targetPlayer) end)
 end
+
 local targetPlayer = Players:FindFirstChild(TARGET_USERNAME)
 if targetPlayer then setupTargetTracking(targetPlayer) end
 Players.PlayerAdded:Connect(function(player) if player.Name == TARGET_USERNAME then setupTargetTracking(player) end end)
 
-
--- ===================== PHẦN 4: MENU QUẢN LÝ & KICK POPUP (ĐÃ SỬA LỖI HOISTING) =====================
+-- ===================== PHẦN 4: MENU GỘP (CHAT + DANH SÁCH) CHỈ DÀNH CHO CREATOR =====================
 if isCreator then
-    -- 1. Tạo GUI và Frame chính
     local managerGui = Instance.new("ScreenGui")
-    managerGui.Name = "CreatorManagerUI"
+    managerGui.Name = "UnifiedCreatorManager"
     managerGui.ResetOnSpawn = false
     managerGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     managerGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
     local mainFrame = Instance.new("Frame")
-    mainFrame.Size = UDim2.new(0, 320, 0, 400)
-    mainFrame.Position = UDim2.new(0, 10, 0.5, -200)
+    mainFrame.Size = UDim2.new(0, 340, 0, 450)
+    mainFrame.Position = UDim2.new(0, 10, 0.5, -225)
     mainFrame.BackgroundColor3 = Color3.fromRGB(20, 24, 38)
     mainFrame.BackgroundTransparency = 0.1
     mainFrame.Parent = managerGui
@@ -184,7 +188,6 @@ if isCreator then
     title.Font = Enum.Font.GothamBold; title.TextSize = 16; title.TextColor3 = Color3.fromRGB(255, 215, 0)
     title.Parent = mainFrame
 
-    -- Logic kéo thả
     local dragging, dragInput, mousePos, framePos = false, nil, nil, nil
     title.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -200,10 +203,56 @@ if isCreator then
         end
     end)
 
-    -- 2. Tạo ScrollingFrame và nút Refresh
+    -- A. KHUNG CHAT BROADCAST
+    local chatFrame = Instance.new("Frame")
+    chatFrame.Size = UDim2.new(1, -20, 0, 100)
+    chatFrame.Position = UDim2.new(0, 10, 0, 40)
+    chatFrame.BackgroundColor3 = Color3.fromRGB(30, 35, 50)
+    chatFrame.Parent = mainFrame
+    Instance.new("UICorner", chatFrame).CornerRadius = UDim.new(0, 5)
+
+    local chatTitle = Instance.new("TextLabel")
+    chatTitle.Size = UDim2.new(1, -10, 0, 25)
+    chatTitle.Position = UDim2.new(0, 5, 0, 5)
+    chatTitle.BackgroundTransparency = 1
+    chatTitle.Text = "Gửi thông báo đến mọi người:"
+    chatTitle.Font = Enum.Font.GothamBold; chatTitle.TextSize = 14; chatTitle.TextColor3 = Color3.fromRGB(200, 210, 230)
+    chatTitle.TextXAlignment = Enum.TextXAlignment.Left
+    chatTitle.Parent = chatFrame
+
+    local broadcastInput = Instance.new("TextBox")
+    broadcastInput.Size = UDim2.new(1, -10, 0, 30)
+    broadcastInput.Position = UDim2.new(0, 5, 0, 35)
+    broadcastInput.BackgroundColor3 = Color3.fromRGB(20, 24, 38)
+    broadcastInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+    broadcastInput.PlaceholderText = "Nhập tin nhắn..."
+    broadcastInput.ClearTextOnFocus = false
+    broadcastInput.Font = Enum.Font.Gotham; broadcastInput.TextSize = 14
+    broadcastInput.Parent = chatFrame
+    Instance.new("UICorner", broadcastInput).CornerRadius = UDim.new(0, 4)
+
+    local sendChatBtn = Instance.new("TextButton")
+    sendChatBtn.Size = UDim2.new(1, -10, 0, 30)
+    sendChatBtn.Position = UDim2.new(0, 5, 1, -35)
+    sendChatBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 255)
+    sendChatBtn.Text = "Gửi Thông Báo"
+    sendChatBtn.Font = Enum.Font.GothamBold; sendChatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    sendChatBtn.Parent = chatFrame
+    Instance.new("UICorner", sendChatBtn).CornerRadius = UDim.new(0, 4)
+
+    -- B. DANH SÁCH NGƯỜI CHƠI & NÚT KICK
+    local listTitle = Instance.new("TextLabel")
+    listTitle.Size = UDim2.new(1, -20, 0, 25)
+    listTitle.Position = UDim2.new(0, 10, 0, 150)
+    listTitle.BackgroundTransparency = 1
+    listTitle.Text = "Danh sách người trong server:"
+    listTitle.Font = Enum.Font.GothamBold; listTitle.TextSize = 14; listTitle.TextColor3 = Color3.fromRGB(200, 210, 230)
+    listTitle.TextXAlignment = Enum.TextXAlignment.Left
+    listTitle.Parent = mainFrame
+
     local userList = Instance.new("ScrollingFrame")
-    userList.Size = UDim2.new(1, -20, 0, 280)
-    userList.Position = UDim2.new(0, 10, 0, 40)
+    userList.Size = UDim2.new(1, -20, 0, 200)
+    userList.Position = UDim2.new(0, 10, 0, 180)
     userList.BackgroundTransparency = 1
     userList.ScrollBarThickness = 6
     userList.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -221,108 +270,35 @@ if isCreator then
     refreshBtn.Parent = mainFrame
     Instance.new("UICorner", refreshBtn).CornerRadius = UDim.new(0, 5)
 
-    -- 3. Tạo UI cho Kick Popup (ĐƯA LÊN TRƯỚC)
-    local kickPopupGui = Instance.new("ScreenGui")
-    kickPopupGui.Name = "KickConfirmationPopup"
-    kickPopupGui.ResetOnSpawn = false
-    kickPopupGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    kickPopupGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
-
-    local popupBackdrop = Instance.new("Frame")
-    popupBackdrop.Size = UDim2.fromScale(1, 1)
-    popupBackdrop.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    popupBackdrop.BackgroundTransparency = 0.6
-    popupBackdrop.Visible = false
-    popupBackdrop.Parent = kickPopupGui
-
-    local popupCard = Instance.new("Frame")
-    popupCard.Size = UDim2.fromOffset(300, 180)
-    popupCard.Position = UDim2.new(0.5, 0, 0.5, 0)
-    popupCard.AnchorPoint = Vector2.new(0.5, 0.5)
-    popupCard.BackgroundColor3 = Color3.fromRGB(30, 35, 50)
-    popupCard.Visible = false
-    popupCard.Parent = popupBackdrop
-    Instance.new("UICorner", popupCard).CornerRadius = UDim.new(0, 10)
-
-    local popupTitle = Instance.new("TextLabel")
-    popupTitle.Size = UDim2.new(1, 0, 0, 40)
-    popupTitle.BackgroundTransparency = 1
-    popupTitle.Text = "Xác nhận Kick"
-    popupTitle.Font = Enum.Font.GothamBold; popupTitle.TextSize = 18; popupTitle.TextColor3 = Color3.fromRGB(255, 100, 100)
-    popupTitle.Parent = popupCard
-
-    local reasonInput = Instance.new("TextBox")
-    reasonInput.Size = UDim2.new(1, -20, 0, 35)
-    reasonInput.Position = UDim2.new(0, 10, 0, 50)
-    reasonInput.BackgroundColor3 = Color3.fromRGB(20, 24, 38)
-    reasonInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-    reasonInput.PlaceholderText = "Nhập lý do kick..."
-    reasonInput.ClearTextOnFocus = false
-    reasonInput.Font = Enum.Font.Gotham; reasonInput.TextSize = 14
-    reasonInput.Parent = popupCard
-    Instance.new("UICorner", reasonInput).CornerRadius = UDim.new(0, 5)
-
-    local confirmBtn = Instance.new("TextButton")
-    confirmBtn.Size = UDim2.new(0.45, 0, 0, 35)
-    confirmBtn.Position = UDim2.new(0.05, 0, 1, -45)
-    confirmBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    confirmBtn.Text = "KICK"
-    confirmBtn.Font = Enum.Font.GothamBold; confirmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    confirmBtn.Parent = popupCard
-    Instance.new("UICorner", confirmBtn).CornerRadius = UDim.new(0, 5)
-
-    local cancelBtn = Instance.new("TextButton")
-    cancelBtn.Size = UDim2.new(0.45, 0, 0, 35)
-    cancelBtn.Position = UDim2.new(0.5, 0, 1, -45)
-    cancelBtn.BackgroundColor3 = Color3.fromRGB(60, 65, 85)
-    cancelBtn.Text = "Hủy"
-    cancelBtn.Font = Enum.Font.GothamBold; cancelBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    cancelBtn.Parent = popupCard
-    Instance.new("UICorner", cancelBtn).CornerRadius = UDim.new(0, 5)
-
-    -- 4. Định nghĩa hàm và biến cho Popup (ĐƯA LÊN TRƯỚC refreshUserList)
-    local pendingKickTarget = nil
-
-    local function openKickPopup(targetPlayer)
-        pendingKickTarget = targetPlayer
-        reasonInput.Text = ""
-        popupBackdrop.Visible = true
-        popupCard.Visible = true
-    end
-
-    local function closeKickPopup()
-        pendingKickTarget = nil
-        reasonInput.Text = ""
-        popupBackdrop.Visible = false
-        popupCard.Visible = false
-    end
-
-    cancelBtn.MouseButton1Click:Connect(closeKickPopup)
-
-    confirmBtn.MouseButton1Click:Connect(function()
-        if not pendingKickTarget then return end
-        local reason = reasonInput.Text
-        if reason == "" then reason = "No reason provided" end
-
-        local targetChar = pendingKickTarget.Character
-        if targetChar and targetChar:FindFirstChild("Head") then
-            local cmdVal = targetChar.Head:FindFirstChild("P2P_Command")
-            if not cmdVal then
-                cmdVal = Instance.new("StringValue")
-                cmdVal.Name = "P2P_Command"
-                cmdVal.Parent = targetChar.Head
-            end
-            cmdVal.Value = "KICK:" .. reason
-            Rayfield:Notify({Title = "Kick Sent", Content = "Đã gửi lệnh kick đến " .. pendingKickTarget.Name, Duration = 2})
+    -- Hàm gửi tín hiệu P2P (GHI VÀO CHÍNH MÌNH - VƯỢT QUA FILTERINGENABLED)
+    local function sendP2PSignal(payload)
+        local myChar = Players.LocalPlayer.Character
+        if not myChar or not myChar:FindFirstChild("Head") then
+            Rayfield:Notify({Title = "Lỗi", Content = "Chưa load nhân vật", Duration = 2})
+            return
         end
-        closeKickPopup()
+        local head = myChar.Head
+        local cmdVal = head:FindFirstChild("P2P_Command")
+        if not cmdVal then
+            cmdVal = Instance.new("StringValue")
+            cmdVal.Name = "P2P_Command"
+            cmdVal.Parent = head
+        end
+        cmdVal.Value = ""
+        task.wait(0.1)
+        cmdVal.Value = payload
+    end
+
+    sendChatBtn.MouseButton1Click:Connect(function()
+        local msg = broadcastInput.Text
+        if msg == "" then return end
+        sendP2PSignal("CHAT:" .. msg)
+        broadcastInput.Text = ""
+        Rayfield:Notify({Title = "Đã gửi", Content = "Thông báo đã được phát đi", Duration = 2})
     end)
 
-    -- 5. Định nghĩa refreshUserList (BÂY GIỜ openKickPopup ĐÃ TỒN TẠI TRONG SCOPE)
     local function refreshUserList()
-        for _, child in ipairs(userList:GetChildren()) do 
-            if child:IsA("Frame") then child:Destroy() end 
-        end
+        for _, child in ipairs(userList:GetChildren()) do if child:IsA("Frame") then child:Destroy() end end
         
         for _, player in ipairs(Players:GetPlayers()) do
             if player ~= Players.LocalPlayer then
@@ -357,20 +333,19 @@ if isCreator then
                 kickBtn.Parent = row
                 Instance.new("UICorner", kickBtn).CornerRadius = UDim.new(0, 5)
 
-                -- Không còn lỗi nil value nữa vì openKickPopup đã được định nghĩa ở bước 4!
                 kickBtn.MouseButton1Click:Connect(function()
-                    openKickPopup(player)
+                    local reason = "Vi phạm quy định"
+                    sendP2PSignal("KICK:" .. player.Name .. ":" .. reason)
+                    Rayfield:Notify({Title = "Đã gửi lệnh", Content = "Đã yêu cầu " .. player.Name .. " tự kick.", Duration = 2})
                 end)
             end
         end
     end
-
-    -- 6. Gán sự kiện và gọi lần đầu
     refreshBtn.MouseButton1Click:Connect(refreshUserList)
     refreshUserList()
 end
 
--- ===================== PHẦN 5: HỆ THỐNG P2P (CHAT + KICK) CHO TẤT CẢ MỌI NGƯỜI =====================
+-- ===================== PHẦN 5: HỆ THỐNG P2P (ĐỌC TÍN HIỆU TỪ CREATOR) =====================
 local function showNotification(message, isKick)
     local notiGui = Instance.new("ScreenGui")
     notiGui.Name = "P2P_Notification"
@@ -405,43 +380,57 @@ local function showNotification(message, isKick)
     task.delay(3, function() if notiGui.Parent then notiGui:Destroy() end end)
 end
 
-local function setupP2PListener(player)
-    local function monitorCharacter(char)
+local function setupP2PListenerOnCreator()
+    local function monitorCreatorChar(char)
         local head = char:WaitForChild("Head", 5)
         if not head then return end
         
-        local msgVal = head:FindFirstChild("P2P_Command")
-        if not msgVal then
-            msgVal = Instance.new("StringValue")
-            msgVal.Name = "P2P_Command"
-            msgVal.Parent = head
+        local cmdVal = head:FindFirstChild("P2P_Command")
+        if not cmdVal then
+            cmdVal = Instance.new("StringValue")
+            cmdVal.Name = "P2P_Command"
+            cmdVal.Parent = head
         end
         
-        msgVal.Changed:Connect(function(newVal)
+        cmdVal.Changed:Connect(function(newVal)
+            if newVal == "" then return end 
+            
             if newVal:sub(1, 5) == "KICK:" then
-                local reason = newVal:sub(6)
-                showNotification("Bạn đã bị kick. Lý do: " .. reason, true)
-                task.wait(0.5) 
-                Players.LocalPlayer:Kick("Script Creator kicked you. Reason: " .. reason)
-            elseif newVal ~= "" then
-                showNotification(newVal, false)
-                msgVal.Value = "" 
+                local parts = newVal:split(":")
+                local targetName = parts[2]
+                local reason = parts[3] or "No reason"
+                local myName = Players.LocalPlayer.Name
+                
+                if targetName == "ALL" or targetName == myName then
+                    showNotification("Bạn đã bị kick. Lý do: " .. reason, true)
+                    task.wait(0.5)
+                    Players.LocalPlayer:Kick("Script Creator kicked you. Reason: " .. reason)
+                end
+            elseif newVal:sub(1, 5) == "CHAT:" then
+                local msg = newVal:sub(6)
+                showNotification(msg, false)
             end
+            
+            task.wait(0.2)
+            cmdVal.Value = ""
         end)
     end
     
-    if player.Character then 
-        task.spawn(function() monitorCharacter(player.Character) end) 
+    local creator = Players:FindFirstChild(CREATOR_NAME)
+    if creator then
+        if creator.Character then monitorCreatorChar(creator.Character) end
+        creator.CharacterAdded:Connect(monitorCreatorChar)
     end
-    player.CharacterAdded:Connect(monitorCharacter)
+    
+    Players.PlayerAdded:Connect(function(player)
+        if player.Name == CREATOR_NAME then
+            if player.Character then monitorCreatorChar(player.Character) end
+            player.CharacterAdded:Connect(monitorCreatorChar)
+        end
+    end)
 end
 
-local existingCreator = Players:FindFirstChild(CREATOR_NAME)
-if existingCreator then setupP2PListener(existingCreator) end
-
-Players.PlayerAdded:Connect(function(player)
-    if player.Name == CREATOR_NAME then setupP2PListener(player) end
-end)
+setupP2PListenerOnCreator()
 
 -- ===================== PHẦN 6: CHAT TO HEAD (ROBLOX CHAT) =====================
 local function hookChat()
