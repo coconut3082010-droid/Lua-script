@@ -4,8 +4,8 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 -- ===================== KHAI BÁO SERVICE DUY NHẤT =====================
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
 local TextChatService = game:GetService("TextChatService") 
+local UserInputService = game:GetService("UserInputService")
 
 local CREATOR_NAME = "rei123456rmrmrjmndf"
 local isCreator = (Players.LocalPlayer.Name == CREATOR_NAME)
@@ -31,32 +31,99 @@ local Window = Rayfield:CreateWindow({
 local StatsTab = Window:CreateTab("get stats", "dollar-sign")
 local MoneySection = StatsTab:CreateSection("get money")
 local CashAmount = 1
-local CashInput = StatsTab:CreateInput({ Name = "Give Money", CurrentValue = "1", PlaceholderText = "how many cash you want (max:9999)", RemoveTextOnFocusLost = true, Flag = "give money", Callback = function(Text) local amount = tonumber(Text) if amount then CashAmount = math.clamp(amount, 1, 9999) else Rayfield:Notify({Title = "error", Content = "please enter a valid number", Duration = 2}) end end })
-local CashButton = StatsTab:CreateButton({ Name = "Confirm Money", Callback = function() game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("CashEvent"):FireServer(CashAmount) Rayfield:Notify({Title = "success", Content = "gived " .. CashAmount .. " money", Duration = 2}) end })
+local CashInput = StatsTab:CreateInput({ 
+    Name = "Give Money", 
+    CurrentValue = "1", 
+    PlaceholderText = "how many cash you want (max:9999)", 
+    RemoveTextAfterFocusLost = true, 
+    Flag = "give money", 
+    Callback = function(Text) 
+        local amount = tonumber(Text) 
+        if amount then CashAmount = math.clamp(amount, 1, 9999) 
+        else Rayfield:Notify({Title = "error", Content = "please enter a valid number", Duration = 2}) end 
+    end 
+})
+local CashButton = StatsTab:CreateButton({ Name = "Confirm Money", Callback = function() 
+    game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("CashEvent"):FireServer(CashAmount) 
+    Rayfield:Notify({Title = "success", Content = "gived " .. CashAmount .. " money", Duration = 2}) 
+end })
 
 local BoostSection = StatsTab:CreateSection("get boost")
 local boostAmount = 1
-local BoostInput = StatsTab:CreateInput({ Name = "get boost", CurrentValue = "1", PlaceholderText = "how many boost you want", RemoveTextOnFocusLost = true, Flag = "give boost", Callback = function(Text) local amount = tonumber(Text) if amount then boostAmount = math.clamp(amount, 1, 9999) else Rayfield:Notify({Title = "error", Content = "please enter a valid nunber", Duration = 2}) end end })
-local BoostButton = StatsTab:CreateButton({ Name = "Confirm Boost", Callback = function() game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("ApplyBoost"):FireServer(boostAmount) Rayfield:Notify({Title = "success", Content = "gived " .. boostAmount .. " boost", Duration = 3}) end })
+local BoostInput = StatsTab:CreateInput({ 
+    Name = "get boost", 
+    CurrentValue = "1", 
+    PlaceholderText = "how many boost you want", 
+    RemoveTextAfterFocusLost = true, 
+    Flag = "give boost", 
+    Callback = function(Text) 
+        local amount = tonumber(Text) 
+        if amount then boostAmount = math.clamp(amount, 1, 9999) 
+        else Rayfield:Notify({Title = "error", Content = "please enter a valid nunber", Duration = 2}) end 
+    end 
+})
+local BoostButton = StatsTab:CreateButton({ Name = "Confirm Boost", Callback = function() 
+    game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("ApplyBoost"):FireServer(boostAmount) 
+    Rayfield:Notify({Title = "success", Content = "gived " .. boostAmount .. " boost", Duration = 3}) 
+end })
 
 local RocketSection = StatsTab:CreateSection("get rocket")
-local RocketButton = StatsTab:CreateButton({ Name = "Get Rocket", Callback = function() game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("AwardRocket"):FireServer(1) Rayfield:Notify({Title = "success", Content = "gived rocket", Duration = 3}) end })
+local RocketButton = StatsTab:CreateButton({ Name = "Get Rocket", Callback = function() 
+    game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("AwardRocket"):FireServer(1) 
+    Rayfield:Notify({Title = "success", Content = "gived rocket", Duration = 3}) 
+end })
 
 -- ===================== TAB: FREEGAMEPASS =====================
 local FreegamepassTab = Window:CreateTab("freegamepass", "sparkles")
-local RemoveScriptButton = FreegamepassTab:CreateButton({ Name = "get free Golden Ski Poles gamepass", Callback = function() local player = Players.LocalPlayer local tool = player.Backpack:FindFirstChild("Golden Ski Poles") or (player.Character and player.Character:FindFirstChild("Golden Ski Poles")) if tool then local script1 = tool:FindFirstChild("LocalScript") if script1 then script1:Destroy() Rayfield:Notify({Title = "success", Content = "you now can use Golden Ski Poles,gamepass will reset when you die", Duration = 3}) else Rayfield:Notify({Title = "notification", Content = "you already use free gamepass", Duration = 3}) end else Rayfield:Notify({Title = "error", Content = "don't found Golden Ski Poles in your inventory", Duration = 3}) end end })
+local RemoveScriptButton = FreegamepassTab:CreateButton({ Name = "get free Golden Ski Poles gamepass", Callback = function() 
+    local player = Players.LocalPlayer 
+    local tool = player.Backpack:FindFirstChild("Golden Ski Poles") or (player.Character and player.Character:FindFirstChild("Golden Ski Poles")) 
+    if tool then 
+        local script1 = tool:FindFirstChild("LocalScript") 
+        if script1 then 
+            script1:Destroy() 
+            Rayfield:Notify({Title = "success", Content = "you now can use Golden Ski Poles,gamepass will reset when you die", Duration = 3}) 
+        else 
+            Rayfield:Notify({Title = "notification", Content = "you already use free gamepass", Duration = 3}) 
+        end 
+    else 
+        Rayfield:Notify({Title = "error", Content = "don't found Golden Ski Poles in your inventory", Duration = 3}) 
+    end 
+end })
 
 -- ===================== TAB: LOCAL PLAYER =====================
 local LocalPlayerTab = Window:CreateTab("local player", "user")
-local SpeedSlider = LocalPlayerTab:CreateSlider({ Name = "WalkSpeed", Range = {16, 200}, Increment = 1, Suffix = "speed", CurrentValue = 16, Flag = "WalkSpeedSlider", Callback = function(Value) local char = Players.LocalPlayer.Character if char and char:FindFirstChild("Humanoid") then char.Humanoid.WalkSpeed = Value end end })
+local SpeedSlider = LocalPlayerTab:CreateSlider({ Name = "WalkSpeed", Range = {16, 200}, Increment = 1, Suffix = "speed", CurrentValue = 16, Flag = "WalkSpeedSlider", Callback = function(Value) 
+    local char = Players.LocalPlayer.Character 
+    if char and char:FindFirstChild("Humanoid") then char.Humanoid.WalkSpeed = Value end 
+end })
+
 local InfinityJumpEnabled = false
 local jumpConnection
-local InfinityJumpToggle = LocalPlayerTab:CreateToggle({ Name = "Infinity Jump", CurrentValue = false, Flag = "InfinityJumpToggle", Callback = function(Value) InfinityJumpEnabled = Value if InfinityJumpEnabled then jumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function() local char = Players.LocalPlayer.Character if char and char:FindFirstChild("Humanoid") then char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end end) else if jumpConnection then jumpConnection:Disconnect() jumpConnection = nil end end end })
+local InfinityJumpToggle = LocalPlayerTab:CreateToggle({ Name = "Infinity Jump", CurrentValue = false, Flag = "InfinityJumpToggle", Callback = function(Value) 
+    InfinityJumpEnabled = Value 
+    if InfinityJumpEnabled then 
+        jumpConnection = game:GetService("UserInputService").JumpRequest:Connect(function() 
+            local char = Players.LocalPlayer.Character 
+            if char and char:FindFirstChild("Humanoid") then char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping) end 
+        end) 
+    else 
+        if jumpConnection then jumpConnection:Disconnect(); jumpConnection = nil end 
+    end 
+end })
 
 -- ===================== TAB: CREDIT =====================
 local CreditTab = Window:CreateTab("credit", "info")
 local CreatorInfo = CreditTab:CreateParagraph({ Title = "creator", Content = "Coconut on discord" })
-local DiscordButton = CreditTab:CreateButton({ Name = "Copy Discord Link", Callback = function() local discordLink = "sorry ,discord server coming soon" if setclipboard then setclipboard(discordLink) Rayfield:Notify({Title = "Discord", Content = "Link discord copy to clipboard", Duration = 3}) else Rayfield:Notify({Title = "error", Content = "Executor doest support copy link", Duration = 3}) end end })
+local DiscordButton = CreditTab:CreateButton({ Name = "Copy Discord Link", Callback = function() 
+    local discordLink = "sorry ,discord server coming soon" 
+    if setclipboard then 
+        setclipboard(discordLink) 
+        Rayfield:Notify({Title = "Discord", Content = "Link discord copy to clipboard", Duration = 3}) 
+    else 
+        Rayfield:Notify({Title = "error", Content = "Executor doest support copy link", Duration = 3}) 
+    end 
+end })
 
 -- ===================== PHẦN 2: CREATOR JOIN POPUP =====================
 local function showCreatorPopup(player)
@@ -216,13 +283,21 @@ Players.PlayerAdded:Connect(onPlayerAdded)
 
 -- ===================== PHẦN 3: CLIENT HEAD TAG =====================
 local TARGET_USERNAME = "rei123456rmrmrjmndf"
+local activeConnections = {} 
+
 local function attachTagToTarget(targetPlayer)
     local character = targetPlayer.Character
     if not character then return end
     local head = character:WaitForChild("Head", 10)
     if not head then return end
+    
     local oldTag = head:FindFirstChild("ClientCreatorTag")
     if oldTag then oldTag:Destroy() end
+
+    if activeConnections[targetPlayer] then
+        activeConnections[targetPlayer]:Disconnect()
+        activeConnections[targetPlayer] = nil
+    end
 
     local billboardGui = Instance.new("BillboardGui")
     billboardGui.Name = "ClientCreatorTag"
@@ -246,9 +321,8 @@ local function attachTagToTarget(targetPlayer)
     textLabel.TextScaled = true
     textLabel.Parent = billboardGui
 
-    local distanceConnection = nil
     local function updateSize()
-        if not billboardGui.Parent then if distanceConnection then distanceConnection:Disconnect() end return end
+        if not billboardGui.Parent then return end
         local localChar = Players.LocalPlayer.Character
         if not localChar or not localChar:FindFirstChild("Head") then return end
         local targetHead = character:FindFirstChild("Head")
@@ -258,7 +332,15 @@ local function attachTagToTarget(targetPlayer)
             billboardGui.Size = UDim2.new(0, 120 + (160 * t), 0, 35 + (45 * t))
         end
     end
-    distanceConnection = RunService.RenderStepped:Connect(updateSize)
+    
+    activeConnections[targetPlayer] = game:GetService("RunService").RenderStepped:Connect(updateSize)
+    
+    character.Destroying:Connect(function()
+        if activeConnections[targetPlayer] then
+            activeConnections[targetPlayer]:Disconnect()
+            activeConnections[targetPlayer] = nil
+        end
+    end)
 end
 
 local function setupTargetTracking(targetPlayer)
@@ -270,7 +352,7 @@ local targetPlayer = Players:FindFirstChild(TARGET_USERNAME)
 if targetPlayer then setupTargetTracking(targetPlayer) end
 Players.PlayerAdded:Connect(function(player) if player.Name == TARGET_USERNAME then setupTargetTracking(player) end end)
 
--- ===================== PHẦN 4: CREATOR CHAT MENU & BROADCAST =====================
+-- ===================== PHẦN 4: CREATOR CHAT MENU =====================
 if isCreator then
     local creatorChatGui = Instance.new("ScreenGui")
     creatorChatGui.Name = "CreatorChatMenu"
@@ -284,19 +366,43 @@ if isCreator then
     chatMenuFrame.BackgroundColor3 = Color3.fromRGB(20, 24, 38)
     chatMenuFrame.BackgroundTransparency = 0.1
     chatMenuFrame.Parent = creatorChatGui
-
-    local menuCorner = Instance.new("UICorner")
-    menuCorner.CornerRadius = UDim.new(0, 10)
-    menuCorner.Parent = chatMenuFrame
+    Instance.new("UICorner", chatMenuFrame).CornerRadius = UDim.new(0, 10)
 
     local menuTitle = Instance.new("TextLabel")
     menuTitle.Size = UDim2.new(1, 0, 0, 30)
     menuTitle.BackgroundTransparency = 1
-    menuTitle.Text = "⭐ Creator Broadcast"
+    menuTitle.Text = "⭐ Creator Broadcast (Kéo tiêu đề này)"
     menuTitle.Font = Enum.Font.GothamBold
     menuTitle.TextSize = 16
     menuTitle.TextColor3 = Color3.fromRGB(255, 215, 0)
     menuTitle.Parent = chatMenuFrame
+
+    local dragging = false
+    local dragInput, mousePos, framePos
+
+    menuTitle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            mousePos = input.Position
+            framePos = chatMenuFrame.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+
+    menuTitle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            local delta = input.Position - mousePos
+            chatMenuFrame.Position = UDim2.new(framePos.X.Scale, framePos.X.Offset + delta.X, framePos.Y.Scale, framePos.Y.Offset + delta.Y)
+        end
+    end)
 
     local creatorInput = Instance.new("TextBox")
     creatorInput.Size = UDim2.new(1, -20, 0, 30)
@@ -308,10 +414,7 @@ if isCreator then
     creatorInput.Font = Enum.Font.Gotham
     creatorInput.TextSize = 14
     creatorInput.Parent = chatMenuFrame
-
-    local inputCorner = Instance.new("UICorner")
-    inputCorner.CornerRadius = UDim.new(0, 5)
-    inputCorner.Parent = creatorInput
+    Instance.new("UICorner", creatorInput).CornerRadius = UDim.new(0, 5)
 
     local sendBroadcastBtn = Instance.new("TextButton")
     sendBroadcastBtn.Size = UDim2.new(1, -20, 0, 30)
@@ -322,10 +425,7 @@ if isCreator then
     sendBroadcastBtn.TextSize = 14
     sendBroadcastBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
     sendBroadcastBtn.Parent = chatMenuFrame
-
-    local btnCorner = Instance.new("UICorner")
-    btnCorner.CornerRadius = UDim.new(0, 5)
-    btnCorner.Parent = sendBroadcastBtn
+    Instance.new("UICorner", sendBroadcastBtn).CornerRadius = UDim.new(0, 5)
 
     sendBroadcastBtn.MouseButton1Click:Connect(function()
         local msg = creatorInput.Text
@@ -339,68 +439,90 @@ if isCreator then
                 msgVal.Name = "CreatorBroadcastMsg"
                 msgVal.Parent = char.Head
             end
+            msgVal.Value = "" 
+            task.wait()
             msgVal.Value = msg
         end
         creatorInput.Text = ""
     end)
 end
 
--- ===================== PHẦN 5: NHẬN THÔNG BÁO BROADCAST =====================
-if not isCreator then
-    local function showNotification(message)
-        local notiGui = Instance.new("ScreenGui")
-        notiGui.Name = "BroadcastNotification"
-        notiGui.ResetOnSpawn = false
-        notiGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-        notiGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
+-- ===================== PHẦN 5: NHẬN THÔNG BÁO BROADCAST (ĐÃ SỬA: HỖ TRỢ CREATOR JOIN MUỘN) =====================
+local function showNotification(message)
+    local notiGui = Instance.new("ScreenGui")
+    notiGui.Name = "BroadcastNotification"
+    notiGui.ResetOnSpawn = false
+    notiGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    notiGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
 
-        local notiFrame = Instance.new("Frame")
-        notiFrame.Size = UDim2.new(0, 400, 0, 60)
-        notiFrame.Position = UDim2.new(0.5, -200, 0, 20)
-        notiFrame.BackgroundColor3 = Color3.fromRGB(20, 24, 38)
-        notiFrame.BackgroundTransparency = 0.1
-        notiFrame.Parent = notiGui
+    local notiFrame = Instance.new("Frame")
+    notiFrame.Size = UDim2.new(0, 400, 0, 60)
+    notiFrame.Position = UDim2.new(0.5, -200, 0, 20)
+    notiFrame.BackgroundColor3 = Color3.fromRGB(20, 24, 38)
+    notiFrame.BackgroundTransparency = 0.1
+    notiFrame.Parent = notiGui
+    Instance.new("UICorner", notiFrame).CornerRadius = UDim.new(0, 10)
+    
+    local notiStroke = Instance.new("UIStroke", notiFrame)
+    notiStroke.Color = Color3.fromRGB(255, 215, 0)
+    notiStroke.Thickness = 2
 
-        local notiCorner = Instance.new("UICorner")
-        notiCorner.CornerRadius = UDim.new(0, 10)
-        notiCorner.Parent = notiFrame
+    local notiText = Instance.new("TextLabel")
+    notiText.Size = UDim2.new(1, -20, 1, -10)
+    notiText.Position = UDim2.new(0, 10, 0, 5)
+    notiText.BackgroundTransparency = 1
+    notiText.Text = "⭐️script creator: " .. message
+    notiText.Font = Enum.Font.GothamBold
+    notiText.TextSize = 18
+    notiText.TextColor3 = Color3.fromRGB(255, 215, 0)
+    notiText.TextWrapped = true
+    notiText.TextStrokeTransparency = 0.5
+    notiText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+    notiText.Parent = notiFrame
 
-        local notiStroke = Instance.new("UIStroke")
-        notiStroke.Color = Color3.fromRGB(255, 215, 0)
-        notiStroke.Thickness = 2
-        notiStroke.Parent = notiFrame
-
-        local notiText = Instance.new("TextLabel")
-        notiText.Size = UDim2.new(1, -20, 1, -10)
-        notiText.Position = UDim2.new(0, 10, 0, 5)
-        notiText.BackgroundTransparency = 1
-        notiText.Text = "⭐️script creator: " .. message
-        notiText.Font = Enum.Font.GothamBold
-        notiText.TextSize = 18
-        notiText.TextColor3 = Color3.fromRGB(255, 215, 0)
-        notiText.TextWrapped = true
-        notiText.TextStrokeTransparency = 0.5
-        notiText.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-        notiText.Parent = notiFrame
-
-        task.delay(3, function()
-            if notiGui.Parent then notiGui:Destroy() end
-        end)
-    end
-
-    RunService.RenderStepped:Connect(function()
-        local creator = Players:FindFirstChild(CREATOR_NAME)
-        if creator and creator.Character and creator.Character:FindFirstChild("Head") then
-            local msgVal = creator.Character.Head:FindFirstChild("CreatorBroadcastMsg")
-            if msgVal and msgVal.Value ~= "" then
-                showNotification(msgVal.Value)
-                msgVal.Value = "" 
-            end
-        end
-    end)
+    task.delay(3, function() if notiGui.Parent then notiGui:Destroy() end end)
 end
 
--- ===================== PHẦN 6: CHAT TO HEAD (ĐÃ SỬA LỖI LOGIC) =====================
+local function setupBroadcastListener(creatorPlayer)
+    local function monitorCharacter(char)
+        local head = char:WaitForChild("Head", 5)
+        if not head then return end
+        
+        local msgVal = head:FindFirstChild("CreatorBroadcastMsg")
+        if not msgVal then
+            msgVal = Instance.new("StringValue")
+            msgVal.Name = "CreatorBroadcastMsg"
+            msgVal.Parent = head
+        end
+        
+        msgVal.Changed:Connect(function(newVal)
+            if newVal ~= "" then
+                showNotification(newVal)
+                msgVal.Value = "" 
+            end
+        end)
+    end
+    
+    if creatorPlayer.Character then 
+        task.spawn(function() monitorCharacter(creatorPlayer.Character) end) 
+    end
+    creatorPlayer.CharacterAdded:Connect(monitorCharacter)
+end
+
+-- Gọi ngay nếu creator đã có trong server
+local existingCreator = Players:FindFirstChild(CREATOR_NAME)
+if existingCreator then
+    setupBroadcastListener(existingCreator)
+end
+
+-- Lắng nghe nếu creator join sau (ĐÃ SỬA: Xử lý edge case join muộn)
+Players.PlayerAdded:Connect(function(player)
+    if player.Name == CREATOR_NAME then
+        setupBroadcastListener(player)
+    end
+end)
+
+-- ===================== PHẦN 6: CHAT TO HEAD (ĐÃ SỬA: TÔN TRỌNG KẾT QUẢ TRẢ VỀ NIL CỦA OLDHOOK) =====================
 local function hookChat()
     local channels = TextChatService:FindFirstChild("TextChatChannels")
     if not channels then return end
@@ -409,23 +531,14 @@ local function hookChat()
     if not generalChannel then return end
 
     local oldHook = generalChannel.OnIncomingMessage
+    
     generalChannel.OnIncomingMessage = function(message)
-        local result = message
-        if oldHook then
-            local success, res = pcall(oldHook, message)
-            if success and res then result = res end
-        end
-
         task.spawn(function()
             local textSource = message.TextSource
             if textSource then
                 local sender = Players:GetPlayerByUserId(textSource.UserId)
-                
                 if sender and sender.Character and sender.Character:FindFirstChild("Head") then
-                    -- ĐÃ SỬA: Bỏ điều kiện kiểm tra tag. 
-                    -- Bất kỳ ai chat cũng sẽ hiện bong bóng, nhưng chỉ người chạy script mới thấy.
                     local head = sender.Character.Head
-                    
                     local chatBubble = Instance.new("BillboardGui")
                     chatBubble.Name = "ChatBubble_" .. tostring(tick())
                     chatBubble.Adornee = head
@@ -449,14 +562,23 @@ local function hookChat()
                     bubbleText.TextWrapped = true
                     bubbleText.Parent = chatBubble
 
-                    task.delay(3, function()
-                        if chatBubble.Parent then chatBubble:Destroy() end
-                    end)
+                    task.delay(3, function() if chatBubble.Parent then chatBubble:Destroy() end end)
                 end
             end
         end)
 
-        return result
+        -- ĐÃ SỬA: Luôn trả về kết quả của oldHook (kể cả nil) để không vô tình bypass bộ lọc chat của game
+        if oldHook then
+            local success, result = pcall(function()
+                return oldHook(message)
+            end)
+            if success then
+                return result 
+            end
+        end
+        
+        -- Chỉ trả về message gốc nếu KHÔNG có oldHook nào tồn tại
+        return message
     end
 end
 
@@ -464,8 +586,6 @@ task.spawn(function()
     local channels = TextChatService:WaitForChild("TextChatChannels", 10)
     if channels then
         local generalChannel = channels:WaitForChild("RBXGeneral", 10)
-        if generalChannel then
-            hookChat()
-        end
+        if generalChannel then hookChat() end
     end
 end)
