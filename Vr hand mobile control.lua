@@ -106,7 +106,6 @@ end)
 
 ----------------------------------------------------------------
 -- RIGHT SIDE BUTTONS: E, Q, LMB, RMB, Space, Shift, Alt, +, -
--- Nhỏ gọn hơn, mờ hơn, hỗ trợ giữ >3s = khoá (lock) đến khi bấm lại
 ----------------------------------------------------------------
 local RightContainer = Instance.new("Frame")
 RightContainer.Name = "RightButtons"
@@ -158,7 +157,6 @@ local function createHoldButton(def)
 
 	local isLocked = false
 	local holdStart = 0
-	local heldConn = nil
 
 	local function doPress()
 		if def.type == "key" then
@@ -198,13 +196,14 @@ local function createHoldButton(def)
 		end
 	end
 
+	-- GỘP LẠI THÀNH 1 INPUTBEGAN ĐỂ TRÁNH XUNG ĐỘT
 	btn.InputBegan:Connect(function(input)
 		if input.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType ~= Enum.UserInputType.MouseButton1 then
 			return
 		end
 
 		if isLocked then
-			-- bấm lại để mở khoá
+			-- Nhấn lại để mở khoá (Unlock)
 			isLocked = false
 			setVisualLocked(false)
 			setVisualHeld(false)
@@ -212,46 +211,29 @@ local function createHoldButton(def)
 			return
 		end
 
-		holdStart = tick()
+		-- Bắt đầu giữ (Cập nhật lại thời gian để InputEnded không bị tính nhầm)
+		holdStart = tick() 
 		setVisualHeld(true)
 		doPress()
-
-		if heldConn then heldConn:Disconnect() end
-		heldConn = task.spawn(function()
-			task.wait(LOCK_TIME)
-			-- nếu vẫn đang giữ tay (chưa InputEnded) đủ 3s -> khoá lại
-			if tick() - holdStart >= LOCK_TIME - 0.05 and not isLocked then
-				-- kiểm tra xem input đã thả chưa qua flag riêng
-			end
-		end)
-	end)
-
-	local fingerDown = false
-
-	btn.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-			fingerDown = true
-		end
 	end)
 
 	btn.InputEnded:Connect(function(input)
 		if input.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType ~= Enum.UserInputType.MouseButton1 then
 			return
 		end
-		fingerDown = false
 
 		if isLocked then
-			return -- đang khoá, giữ nguyên trạng thái giữ phím
+			return -- đang khoá, bỏ qua
 		end
 
 		local heldDuration = tick() - holdStart
 		if heldDuration >= LOCK_TIME then
-			-- giữ đủ lâu -> khoá lại, KHÔNG nhả phím
+			-- Giữ đủ lâu -> Khoá (Lock), KHÔNG nhả phím
 			isLocked = true
 			setVisualLocked(true)
 			setVisualHeld(true)
 		else
-			-- giữ ngắn -> nhả phím như bình thường
+			-- Giữ ngắn -> Nhả phím bình thường
 			setVisualHeld(false)
 			doRelease()
 		end
