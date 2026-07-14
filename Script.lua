@@ -76,7 +76,7 @@ local CashButton = StatsTab:CreateButton({
 
         Rayfield:Notify({
             Title = "success",
-            Content = "gived" .. CashAmount .. "money",
+            Content = "gived " .. CashAmount .. " money",
             Duration = 2
         })
     end,
@@ -118,7 +118,7 @@ local BoostButton = StatsTab:CreateButton({
 
         Rayfield:Notify({
             Title = "success",
-            Content = "gived" .. boostAmount .. " boost",
+            Content = "gived " .. boostAmount .. " boost",
             Duration = 3
         })
     end,
