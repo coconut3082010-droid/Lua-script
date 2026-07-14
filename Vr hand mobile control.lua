@@ -196,7 +196,6 @@ local function createHoldButton(def)
 		end
 	end
 
-	-- GỘP LẠI THÀNH 1 INPUTBEGAN ĐỂ TRÁNH XUNG ĐỘT
 	btn.InputBegan:Connect(function(input)
 		if input.UserInputType ~= Enum.UserInputType.Touch and input.UserInputType ~= Enum.UserInputType.MouseButton1 then
 			return
@@ -208,10 +207,11 @@ local function createHoldButton(def)
 			setVisualLocked(false)
 			setVisualHeld(false)
 			doRelease()
+			holdStart = tick() -- FIX: Cập nhật thời gian để InputEnded không tự động khóa lại
 			return
 		end
 
-		-- Bắt đầu giữ (Cập nhật lại thời gian để InputEnded không bị tính nhầm)
+		-- Bắt đầu giữ
 		holdStart = tick() 
 		setVisualHeld(true)
 		doPress()
