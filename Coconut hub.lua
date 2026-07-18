@@ -1,4 +1,3 @@
--- // COCONUT HUB v1.1
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
