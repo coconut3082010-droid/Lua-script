@@ -657,7 +657,10 @@ end)
 Slider(LPScroll, "Jump Power", 1, 200, 50, function(v)
     LPConfig.Jump = v
     local hum = GetHum()
-    if hum then hum.JumpPower = v end
+    if hum then
+        hum.UseJumpPower = true
+        hum.JumpPower = v
+    end
 end)
 
 
@@ -675,6 +678,7 @@ LocalPlayer.CharacterAdded:Connect(function(char)
     if hum then
         task.wait(0.1)
         hum.WalkSpeed = LPConfig.Speed
+        hum.UseJumpPower = true
         hum.JumpPower = LPConfig.Jump
     end
 end)
