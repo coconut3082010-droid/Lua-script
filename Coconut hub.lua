@@ -514,7 +514,6 @@ local ESPConfig = {
 -- ============================================================
 local ESPTabData, ESPScroll = CreateTab("ESP", "ESP")
 
-Section(ESPScroll, "ESP Controls")
 Toggle(ESPScroll, "Enable ESP",       false, function(v) ESPConfig.Enabled       = v end)
 Toggle(ESPScroll, "Show Distance",    false, function(v) ESPConfig.ShowDistance  = v end)
 Toggle(ESPScroll, "Show Highlight",   false, function(v) ESPConfig.ShowHighlight = v end)
@@ -648,7 +647,6 @@ local function Slider(scroll, label, min, max, default, onChange)
     end)
 end
 
-Section(LPScroll, "Movement")
 
 Slider(LPScroll, "Walk Speed", 1, 100, 16, function(v)
     LPConfig.Speed = v
@@ -662,7 +660,6 @@ Slider(LPScroll, "Jump Power", 1, 200, 50, function(v)
     if hum then hum.JumpPower = v end
 end)
 
-Section(LPScroll, "Abilities")
 
 Toggle(LPScroll, "Infinite Jump", false, function(v)
     LPConfig.InfJump = v
