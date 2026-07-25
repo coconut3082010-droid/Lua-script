@@ -1,4 +1,3 @@
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
@@ -266,7 +265,7 @@ end
 
 local function CreateTab(name, icon)
     local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(0, 76, 0, 60)
+    Btn.Size = UDim2.new(0, 76, 0, 50) -- NHO HON
     Btn.BackgroundColor3 = Color3.fromRGB(16, 12, 28)
     Btn.BorderSizePixel = 0
     Btn.AutoButtonColor = false
@@ -277,23 +276,24 @@ local function CreateTab(name, icon)
 
     local IconLbl = Instance.new("TextLabel")
     IconLbl.Text = icon
-    IconLbl.Size = UDim2.new(1, 0, 0, 28)
-    IconLbl.Position = UDim2.new(0, 0, 0, 6)
+    IconLbl.Size = UDim2.new(1, 0, 0, 22)
+    IconLbl.Position = UDim2.new(0, 0, 0, 5)
     IconLbl.BackgroundTransparency = 1
     IconLbl.TextColor3 = Color3.fromRGB(160, 120, 220)
     IconLbl.Font = Enum.Font.GothamBold
-    IconLbl.TextSize = 20
+    IconLbl.TextSize = 16 -- NHO HON
     IconLbl.ZIndex = 7
     IconLbl.Parent = Btn
 
     local NameLbl = Instance.new("TextLabel")
     NameLbl.Text = name
-    NameLbl.Size = UDim2.new(1, 0, 0, 18)
-    NameLbl.Position = UDim2.new(0, 0, 0, 36)
+    NameLbl.Size = UDim2.new(1, -4, 0, 18)
+    NameLbl.Position = UDim2.new(0, 2, 0, 28) -- SUA VI TRI
     NameLbl.BackgroundTransparency = 1
     NameLbl.TextColor3 = Color3.fromRGB(130, 100, 180)
     NameLbl.Font = Enum.Font.Gotham
-    NameLbl.TextSize = 10
+    NameLbl.TextSize = 9
+    NameLbl.TextScaled = true -- TU DONG SCALE CHU
     NameLbl.ZIndex = 7
     NameLbl.Parent = Btn
 
@@ -447,7 +447,6 @@ local function Dropdown(scroll, label, options, onChange)
     ValBtn.Parent = Wrap
     Instance.new("UICorner", ValBtn).CornerRadius = UDim.new(0, 7)
 
-    -- FIX: Parent DropList vào ScreenGui thoat khoi ClipsDescendants
     local DropList = Instance.new("Frame")
     DropList.Size = UDim2.new(0, 110, 0, #options * 28)
     DropList.BackgroundColor3 = Color3.fromRGB(22, 16, 40)
@@ -477,7 +476,6 @@ local function Dropdown(scroll, label, options, onChange)
         end)
     end
 
-    -- Update vi tri DropList theo AbsolutePosition cua ValBtn
     RunService.RenderStepped:Connect(function()
         if open then
             local abs = ValBtn.AbsolutePosition
@@ -511,7 +509,7 @@ local ESPConfig = {
 -- ============================================================
 -- // ESP TAB
 -- ============================================================
-local ESPTabData, ESPScroll = CreateTab("ESP", "ESP")
+local ESPTabData, ESPScroll = CreateTab("Player ESP", "ESP")
 
 Toggle(ESPScroll, "Enable ESP",       false, function(v) ESPConfig.Enabled       = v end)
 Toggle(ESPScroll, "Show Distance",    false, function(v) ESPConfig.ShowDistance  = v end)
@@ -523,16 +521,17 @@ Dropdown(ESPScroll, "Name Type", {"Display Name", "Username"}, function(v)
 end)
 
 SetActiveTab(ESPTabData)
+
 -- ============================================================
 -- // LOCAL PLAYER TAB
 -- ============================================================
-local LPTabData, LPScroll = CreateTab("Player", "LP")
+local LPTabData, LPScroll = CreateTab("Local Player", "LP")
 
 local LPConfig = {
-    Speed    = 16,
-    Jump     = 50,
-    InfJump  = false,
-    Noclip   = false,
+    Speed   = 16,
+    Jump    = 50,
+    InfJump = false,
+    Noclip  = false,
 }
 
 local function GetChar()
@@ -542,12 +541,7 @@ local function GetHum()
     local c = GetChar()
     return c and c:FindFirstChildOfClass("Humanoid")
 end
-local function GetRoot()
-    local c = GetChar()
-    return c and c:FindFirstChild("HumanoidRootPart")
-end
 
--- // SLIDER helper
 local function Slider(scroll, label, min, max, default, onChange)
     local value = default
 
@@ -646,7 +640,6 @@ local function Slider(scroll, label, min, max, default, onChange)
     end)
 end
 
-
 Slider(LPScroll, "Walk Speed", 1, 100, 16, function(v)
     LPConfig.Speed = v
     local hum = GetHum()
@@ -662,7 +655,6 @@ Slider(LPScroll, "Jump Power", 1, 200, 50, function(v)
     end
 end)
 
-
 Toggle(LPScroll, "Infinite Jump", false, function(v)
     LPConfig.InfJump = v
 end)
@@ -671,7 +663,6 @@ Toggle(LPScroll, "Noclip", false, function(v)
     LPConfig.Noclip = v
 end)
 
--- Apply speed/jump khi character respawn
 LocalPlayer.CharacterAdded:Connect(function(char)
     local hum = char:WaitForChild("Humanoid", 5)
     if hum then
@@ -682,9 +673,7 @@ LocalPlayer.CharacterAdded:Connect(function(char)
     end
 end)
 
--- Inf Jump
-local UIS_InfJump = game:GetService("UserInputService")
-UIS_InfJump.JumpRequest:Connect(function()
+UIS.JumpRequest:Connect(function()
     if not LPConfig.InfJump then return end
     local hum = GetHum()
     if hum and hum:GetState() ~= Enum.HumanoidStateType.Jumping then
@@ -692,7 +681,6 @@ UIS_InfJump.JumpRequest:Connect(function()
     end
 end)
 
--- Noclip loop
 RunService.Stepped:Connect(function()
     if not LPConfig.Noclip then return end
     local char = GetChar()
@@ -704,7 +692,6 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Re-enable collision khi tat noclip
 local wasNoclip = false
 RunService.Heartbeat:Connect(function()
     if wasNoclip and not LPConfig.Noclip then
@@ -719,6 +706,7 @@ RunService.Heartbeat:Connect(function()
     end
     wasNoclip = LPConfig.Noclip
 end)
+
 -- ============================================================
 -- // ESP CORE
 -- ============================================================
