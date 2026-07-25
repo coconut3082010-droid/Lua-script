@@ -3,13 +3,25 @@ local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
 
+-- ScreenGui cho MainFrame
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "CoconutHub"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
-ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.DisplayOrder = 10
+ScreenGui.Parent = CoreGui
+
+-- ScreenGui rieng cho ToggleBtn de dam bao luon hien
+local ToggleGui = Instance.new("ScreenGui")
+ToggleGui.Name = "CoconutToggle"
+ToggleGui.ResetOnSpawn = false
+ToggleGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ToggleGui.IgnoreGuiInset = true
+ToggleGui.DisplayOrder = 999
+ToggleGui.Parent = CoreGui
 
 local HubVisible = false
 
@@ -49,7 +61,7 @@ AccGrad.Color = ColorSequence.new({
 AccGrad.Parent = TopAccent
 
 -- ============================================================
--- // TOGGLE BUTTON
+-- // TOGGLE BUTTON — parent vao ToggleGui rieng
 -- ============================================================
 local ToggleBtn = Instance.new("TextButton")
 ToggleBtn.Size = UDim2.new(0, 54, 0, 54)
@@ -61,7 +73,7 @@ ToggleBtn.Font = Enum.Font.GothamBold
 ToggleBtn.TextSize = 11
 ToggleBtn.BorderSizePixel = 0
 ToggleBtn.ZIndex = 10
-ToggleBtn.Parent = ScreenGui
+ToggleBtn.Parent = ToggleGui
 Instance.new("UICorner", ToggleBtn).CornerRadius = UDim.new(1, 0)
 
 local TGStroke = Instance.new("UIStroke")
@@ -265,7 +277,7 @@ end
 
 local function CreateTab(name, icon)
     local Btn = Instance.new("TextButton")
-    Btn.Size = UDim2.new(0, 76, 0, 50) -- NHO HON
+    Btn.Size = UDim2.new(0, 76, 0, 50)
     Btn.BackgroundColor3 = Color3.fromRGB(16, 12, 28)
     Btn.BorderSizePixel = 0
     Btn.AutoButtonColor = false
@@ -281,19 +293,19 @@ local function CreateTab(name, icon)
     IconLbl.BackgroundTransparency = 1
     IconLbl.TextColor3 = Color3.fromRGB(160, 120, 220)
     IconLbl.Font = Enum.Font.GothamBold
-    IconLbl.TextSize = 16 -- NHO HON
+    IconLbl.TextSize = 16
     IconLbl.ZIndex = 7
     IconLbl.Parent = Btn
 
     local NameLbl = Instance.new("TextLabel")
     NameLbl.Text = name
     NameLbl.Size = UDim2.new(1, -4, 0, 18)
-    NameLbl.Position = UDim2.new(0, 2, 0, 28) -- SUA VI TRI
+    NameLbl.Position = UDim2.new(0, 2, 0, 28)
     NameLbl.BackgroundTransparency = 1
     NameLbl.TextColor3 = Color3.fromRGB(130, 100, 180)
     NameLbl.Font = Enum.Font.Gotham
     NameLbl.TextSize = 9
-    NameLbl.TextScaled = true -- TU DONG SCALE CHU
+    NameLbl.TextScaled = true
     NameLbl.ZIndex = 7
     NameLbl.Parent = Btn
 
@@ -507,7 +519,7 @@ local ESPConfig = {
 }
 
 -- ============================================================
--- // ESP TAB
+-- // TABS
 -- ============================================================
 local ESPTabData, ESPScroll = CreateTab("Player ESP", "ESP")
 
@@ -519,8 +531,6 @@ Toggle(ESPScroll, "Show Player Name", false, function(v) ESPConfig.ShowName     
 Dropdown(ESPScroll, "Name Type", {"Display Name", "Username"}, function(v)
     ESPConfig.NameType = v
 end)
-
-SetActiveTab(ESPTabData)
 
 -- ============================================================
 -- // LOCAL PLAYER TAB
@@ -663,6 +673,9 @@ Toggle(LPScroll, "Noclip", false, function(v)
     LPConfig.Noclip = v
 end)
 
+-- SetActiveTab goi 1 lan duy nhat sau khi tao het tab
+SetActiveTab(ESPTabData)
+
 LocalPlayer.CharacterAdded:Connect(function(char)
     local hum = char:WaitForChild("Humanoid", 5)
     if hum then
@@ -794,7 +807,7 @@ local function CreateESP(player)
         local root = char:WaitForChild("HumanoidRootPart", 5)
         if root then
             Billboard.Adornee = root
-            Billboard.Parent  = game:GetService("CoreGui")
+            Billboard.Parent  = CoreGui
             Highlight.Adornee = char
             Highlight.Parent  = char
         end
