@@ -277,7 +277,6 @@ local function CreateQuickToggleBtn()
         ThirdPersonEnabled = not ThirdPersonEnabled
         UpdateQuickBtn(ThirdPersonEnabled)
         if ThirdPersonEnabled then
-            -- Goi StartThirdPerson neu chua chay
             if not camConn then
                 local ok, err = pcall(function()
                     local cam = workspace.CurrentCamera
@@ -308,7 +307,6 @@ end
 -- // CAMERA HELPERS
 -- ============================================================
 local function CreateMobileZoomButtons()
-    -- Sudah ada di CamGui, skip jika sudah ada
     if CamGui then CamGui:Destroy() end
 
     CamGui = Instance.new("ScreenGui")
@@ -517,11 +515,161 @@ local function StopThirdPerson()
 end
 
 -- ============================================================
+-- // FETCH PHONE SCREEN CORE (REAL-TIME SYNC)
+-- ============================================================
+local PhoneScreenEnabled = false
+local PhoneScreenGui = Instance.new("ScreenGui")
+PhoneScreenGui.Name = "CoconutPhoneScreen"
+PhoneScreenGui.ResetOnSpawn = false
+PhoneScreenGui.Parent = CoreGui
+
+local PhoneFrame = Instance.new("Frame")
+PhoneFrame.Size = UDim2.new(0, 280, 0, 500)
+-- Sửa lại AnchorPoint và Position để đưa lên góc trên bên phải
+PhoneFrame.AnchorPoint = Vector2.new(1, 0) 
+PhoneFrame.Position = UDim2.new(1, -20, 0, 20) -- Góc trên bên phải, cách lề một chút
+PhoneFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+PhoneFrame.BorderSizePixel = 0
+PhoneFrame.Visible = false
+PhoneFrame.ClipsDescendants = true
+PhoneFrame.Parent = PhoneScreenGui
+
+local PhoneCorner = Instance.new("UICorner")
+PhoneCorner.CornerRadius = UDim.new(0, 16)
+PhoneCorner.Parent = PhoneFrame
+
+local realTimeSyncConn = nil
+local syncedUIPairs = {}
+
+local function ClearPhoneFrame()
+    if realTimeSyncConn then 
+        realTimeSyncConn:Disconnect() 
+        realTimeSyncConn = nil 
+    end
+    syncedUIPairs = {}
+    for _, child in ipairs(PhoneFrame:GetChildren()) do
+        if child:IsA("GuiObject") then
+            child:Destroy()
+        end
+    end
+end
+
+local function ShowPhoneScreen(tool)
+    if not PhoneScreenEnabled then return end
+    local surfaceGui = tool:FindFirstChildWhichIsA("SurfaceGui", true)
+    
+    if surfaceGui then
+        ClearPhoneFrame()
+        
+        -- Clone toàn bộ UI sang khung 2D
+        for _, child in ipairs(surfaceGui:GetChildren()) do
+            local clone = child:Clone()
+            clone.Parent = PhoneFrame
+        end
+        
+        -- Khớp các element gốc với element clone để chuẩn bị đồng bộ thời gian thực
+        local origDescendants = surfaceGui:GetDescendants()
+        local cloneDescendants = PhoneFrame:GetDescendants()
+        
+        for i, cloneChild in ipairs(cloneDescendants) do
+            local origChild = origDescendants[i]
+            if origChild and cloneChild and origChild.Name == cloneChild.Name then
+                table.insert(syncedUIPairs, {Original = origChild, Clone = cloneChild})
+            end
+        end
+
+        PhoneFrame.Visible = true
+        
+        -- Bật vòng lặp đồng bộ thời gian thực (real-time sync)
+        realTimeSyncConn = RunService.RenderStepped:Connect(function()
+            if not PhoneFrame.Visible or not surfaceGui.Parent then
+                ClearPhoneFrame()
+                return
+            end
+            
+            for _, pair in ipairs(syncedUIPairs) do
+                local orig = pair.Original
+                local cl = pair.Clone
+                if orig and cl and cl.Parent then
+                    pcall(function()
+                        if orig:IsA("GuiObject") then
+                            cl.Visible = orig.Visible
+                            cl.Position = orig.Position
+                            cl.Size = orig.Size
+                            cl.BackgroundColor3 = orig.BackgroundColor3
+                            cl.BackgroundTransparency = orig.BackgroundTransparency
+                        end
+                        if orig:IsA("TextLabel") or orig:IsA("TextButton") or orig:IsA("TextBox") then
+                            cl.Text = orig.Text
+                            cl.TextColor3 = orig.TextColor3
+                        end
+                        if orig:IsA("ImageLabel") or orig:IsA("ImageButton") then
+                            cl.Image = orig.Image
+                            cl.ImageColor3 = orig.ImageColor3
+                        end
+                    end)
+                end
+            end
+        end)
+    end
+end
+
+local function HidePhoneScreen()
+    PhoneFrame.Visible = false
+    ClearPhoneFrame()
+end
+
+local function CheckAndShowPhone()
+    local char = LocalPlayer.Character
+    if char then
+        local phone = char:FindFirstChild("Phone1")
+        if phone then
+            ShowPhoneScreen(phone)
+        end
+    end
+end
+
+-- Lắng nghe việc người chơi lấy/cất điện thoại
+local function HookPhoneEvents(char)
+    char.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") and child.Name == "Phone1" then
+            task.wait(0.1) -- Đợi mô hình load xong
+            ShowPhoneScreen(child)
+        end
+    end)
+    
+    char.ChildRemoved:Connect(function(child)
+        if child:IsA("Tool") and child.Name == "Phone1" then
+            HidePhoneScreen()
+        end
+    end)
+end
+
+if LocalPlayer.Character then HookPhoneEvents(LocalPlayer.Character) end
+LocalPlayer.CharacterAdded:Connect(HookPhoneEvents)
+
+-- ============================================================
 -- // RAYFIELD TABS
 -- ============================================================
-local ESPTab = Window:CreateTab("ESP", "eye")
+local GameTab = Window:CreateTab("Game", "gamepad")
 
-ESPTab:CreateToggle({
+GameTab:CreateToggle({
+    Name         = "Show Phone Screen (Real-time)",
+    CurrentValue = false,
+    Flag         = "ShowPhoneScreen",
+    Callback     = function(val)
+        PhoneScreenEnabled = val
+        if val then 
+            CheckAndShowPhone() 
+        else 
+            HidePhoneScreen() 
+        end
+    end,
+})
+
+GameTab:CreateDivider()
+
+GameTab:CreateToggle({
     Name         = "Teacher ESP",
     CurrentValue = false,
     Flag         = "TeacherESP",
@@ -531,7 +679,7 @@ ESPTab:CreateToggle({
     end,
 })
 
-ESPTab:CreateColorPicker({
+GameTab:CreateColorPicker({
     Name     = "Teacher ESP Color",
     Color    = ESPConfig.TeacherColor,
     Flag     = "TeacherColor",
@@ -541,9 +689,9 @@ ESPTab:CreateColorPicker({
     end,
 })
 
-ESPTab:CreateDivider()
+GameTab:CreateDivider()
 
-ESPTab:CreateToggle({
+GameTab:CreateToggle({
     Name         = "Player ESP",
     CurrentValue = false,
     Flag         = "PlayerESP",
@@ -553,7 +701,7 @@ ESPTab:CreateToggle({
     end,
 })
 
-ESPTab:CreateColorPicker({
+GameTab:CreateColorPicker({
     Name     = "Player ESP Color",
     Color    = ESPConfig.PlayerColor,
     Flag     = "PlayerColor",
