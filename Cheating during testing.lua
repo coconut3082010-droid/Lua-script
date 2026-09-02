@@ -242,7 +242,6 @@ local function CreateQuickToggleBtn()
     BtnStroke.Thickness = 2
     BtnStroke.Parent    = Btn
 
-    -- Drag
     local dragging, moved, dragStart, startPos = false, false, nil, nil
     Btn.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
@@ -356,12 +355,8 @@ local function CreateMobileZoomButtons()
     HintLbl.ZIndex             = 2
     HintLbl.Parent             = CamGui
 
-    ZoomIn.MouseButton1Click:Connect(function()
-        distance = math.max(3, distance - 2)
-    end)
-    ZoomOut.MouseButton1Click:Connect(function()
-        distance = math.min(50, distance + 2)
-    end)
+    ZoomIn.MouseButton1Click:Connect(function() distance = math.max(3, distance - 2) end)
+    ZoomOut.MouseButton1Click:Connect(function() distance = math.min(50, distance + 2) end)
 end
 
 local function DisableGameCameraScripts()
@@ -369,9 +364,7 @@ local function DisableGameCameraScripts()
         for _, s in ipairs(parent:GetDescendants()) do
             if s:IsA("LocalScript") or s:IsA("ModuleScript") then
                 local n = s.Name:lower()
-                if n:find("camera") or n:find("cam") then
-                    pcall(function() s.Disabled = true end)
-                end
+                if n:find("camera") or n:find("cam") then pcall(function() s.Disabled = true end) end
             end
         end
     end
@@ -385,9 +378,7 @@ local function EnableGameCameraScripts()
         for _, s in ipairs(parent:GetDescendants()) do
             if s:IsA("LocalScript") or s:IsA("ModuleScript") then
                 local n = s.Name:lower()
-                if n:find("camera") or n:find("cam") then
-                    pcall(function() s.Disabled = false end)
-                end
+                if n:find("camera") or n:find("cam") then pcall(function() s.Disabled = false end) end
             end
         end
     end
@@ -410,11 +401,9 @@ local function StartCamLoop()
                 end
             end
         end)
-
         inputConn2 = UIS.InputChanged:Connect(function(input)
             if not ThirdPersonEnabled then return end
-            if input.UserInputType == Enum.UserInputType.Touch
-                and input == activeTouchId then
+            if input.UserInputType == Enum.UserInputType.Touch and input == activeTouchId then
                 local cur = Vector2.new(input.Position.X, input.Position.Y)
                 if lastTouchPos then
                     local dx = cur.X - lastTouchPos.X
@@ -427,10 +416,8 @@ local function StartCamLoop()
                 lastTouchPos = cur
             end
         end)
-
         UIS.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.Touch
-                and input == activeTouchId then
+            if input.UserInputType == Enum.UserInputType.Touch and input == activeTouchId then
                 activeTouchId = nil
                 lastTouchPos  = nil
             end
@@ -446,16 +433,11 @@ local function StartCamLoop()
 
     camConn = RunService.RenderStepped:Connect(function()
         if not ThirdPersonEnabled then return end
-
         local char = LocalPlayer.Character
-        local root = char and (
-            char:FindFirstChild("HumanoidRootPart") or
-            char:FindFirstChildWhichIsA("BasePart")
-        )
+        local root = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart"))
         if not root then return end
 
         cam.CameraType = Enum.CameraType.Scriptable
-
         if not isMobile then
             local mousePos = UIS:GetMouseLocation()
             if lastMousePos and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
@@ -468,18 +450,12 @@ local function StartCamLoop()
         end
 
         local rootPos = root.Position + Vector3.new(0, 2, 0)
-        local cf = CFrame.new(rootPos)
-            * CFrame.Angles(0, math.rad(angleX), 0)
-            * CFrame.Angles(math.rad(angleY), 0, 0)
-            * CFrame.new(0, 0, distance)
-
+        local cf = CFrame.new(rootPos) * CFrame.Angles(0, math.rad(angleX), 0) * CFrame.Angles(math.rad(angleY), 0, 0) * CFrame.new(0, 0, distance)
         cam.CFrame = cf
 
         if char then
             for _, part in ipairs(char:GetDescendants()) do
-                if part:IsA("BasePart") or part:IsA("Decal") then
-                    part.LocalTransparencyModifier = 0
-                end
+                if part:IsA("BasePart") or part:IsA("Decal") then part.LocalTransparencyModifier = 0 end
             end
         end
     end)
@@ -515,7 +491,7 @@ local function StopThirdPerson()
 end
 
 -- ============================================================
--- // FETCH PHONE SCREEN CORE (REAL-TIME SYNC)
+-- // FETCH PHONE SCREEN CORE (REAL-TIME SYNC & AUTO RESIZE)
 -- ============================================================
 local PhoneScreenEnabled = false
 local PhoneScreenGui = Instance.new("ScreenGui")
@@ -524,10 +500,9 @@ PhoneScreenGui.ResetOnSpawn = false
 PhoneScreenGui.Parent = CoreGui
 
 local PhoneFrame = Instance.new("Frame")
-PhoneFrame.Size = UDim2.new(0, 280, 0, 500)
--- Sửa lại AnchorPoint và Position để đưa lên góc trên bên phải
+-- Mặc định set Anchor và Position vào góc TRÊN BÊN PHẢI
 PhoneFrame.AnchorPoint = Vector2.new(1, 0) 
-PhoneFrame.Position = UDim2.new(1, -20, 0, 20) -- Góc trên bên phải, cách lề một chút
+PhoneFrame.Position = UDim2.new(1, -20, 0, 20) 
 PhoneFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 PhoneFrame.BorderSizePixel = 0
 PhoneFrame.Visible = false
@@ -535,8 +510,13 @@ PhoneFrame.ClipsDescendants = true
 PhoneFrame.Parent = PhoneScreenGui
 
 local PhoneCorner = Instance.new("UICorner")
-PhoneCorner.CornerRadius = UDim.new(0, 16)
+PhoneCorner.CornerRadius = UDim.new(0, 10)
 PhoneCorner.Parent = PhoneFrame
+
+-- Bộ scale giúp thu phóng theo ý muốn từ menu Rayfield
+local PhoneScale = Instance.new("UIScale")
+PhoneScale.Scale = 1
+PhoneScale.Parent = PhoneFrame
 
 local realTimeSyncConn = nil
 local syncedUIPairs = {}
@@ -561,13 +541,22 @@ local function ShowPhoneScreen(tool)
     if surfaceGui then
         ClearPhoneFrame()
         
+        -- Tính toán kích thước chuẩn, giữ nguyên tỷ lệ y hệt của Phone1 gốc
+        local canvas = surfaceGui.CanvasSize
+        if canvas and canvas.Y > 0 then
+            local targetHeight = 200 -- Nhỏ gọn
+            local targetWidth = targetHeight * (canvas.X / canvas.Y)
+            PhoneFrame.Size = UDim2.new(0, targetWidth, 0, targetHeight)
+        else
+            PhoneFrame.Size = UDim2.new(0, 110, 0, 200) -- Fallback nếu không đọc được tỷ lệ
+        end
+        
         -- Clone toàn bộ UI sang khung 2D
         for _, child in ipairs(surfaceGui:GetChildren()) do
             local clone = child:Clone()
             clone.Parent = PhoneFrame
         end
         
-        -- Khớp các element gốc với element clone để chuẩn bị đồng bộ thời gian thực
         local origDescendants = surfaceGui:GetDescendants()
         local cloneDescendants = PhoneFrame:GetDescendants()
         
@@ -580,7 +569,6 @@ local function ShowPhoneScreen(tool)
 
         PhoneFrame.Visible = true
         
-        -- Bật vòng lặp đồng bộ thời gian thực (real-time sync)
         realTimeSyncConn = RunService.RenderStepped:Connect(function()
             if not PhoneFrame.Visible or not surfaceGui.Parent then
                 ClearPhoneFrame()
@@ -623,25 +611,19 @@ local function CheckAndShowPhone()
     local char = LocalPlayer.Character
     if char then
         local phone = char:FindFirstChild("Phone1")
-        if phone then
-            ShowPhoneScreen(phone)
-        end
+        if phone then ShowPhoneScreen(phone) end
     end
 end
 
--- Lắng nghe việc người chơi lấy/cất điện thoại
 local function HookPhoneEvents(char)
     char.ChildAdded:Connect(function(child)
         if child:IsA("Tool") and child.Name == "Phone1" then
-            task.wait(0.1) -- Đợi mô hình load xong
+            task.wait(0.1) 
             ShowPhoneScreen(child)
         end
     end)
-    
     char.ChildRemoved:Connect(function(child)
-        if child:IsA("Tool") and child.Name == "Phone1" then
-            HidePhoneScreen()
-        end
+        if child:IsA("Tool") and child.Name == "Phone1" then HidePhoneScreen() end
     end)
 end
 
@@ -659,11 +641,20 @@ GameTab:CreateToggle({
     Flag         = "ShowPhoneScreen",
     Callback     = function(val)
         PhoneScreenEnabled = val
-        if val then 
-            CheckAndShowPhone() 
-        else 
-            HidePhoneScreen() 
-        end
+        if val then CheckAndShowPhone() else HidePhoneScreen() end
+    end,
+})
+
+-- Thanh Slider để bạn có thể phóng to/thu nhỏ cái điện thoại tùy thích
+GameTab:CreateSlider({
+    Name = "Phone Screen Size",
+    Range = {0.5, 3},
+    Increment = 0.1,
+    Suffix = "x",
+    CurrentValue = 1,
+    Flag = "PhoneScaleSlider",
+    Callback = function(Value)
+        PhoneScale.Scale = Value
     end,
 })
 
@@ -730,11 +721,7 @@ PlayerTab:CreateToggle({
     Flag         = "ShowTPBtn",
     Callback     = function(val)
         QuickBtnVisible = val
-        if val then
-            CreateQuickToggleBtn()
-        else
-            DestroyQuickBtn()
-        end
+        if val then CreateQuickToggleBtn() else DestroyQuickBtn() end
     end,
 })
 
