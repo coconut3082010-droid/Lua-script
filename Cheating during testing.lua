@@ -3,7 +3,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
     Name = "Coconut Hub",
-    LoadingTitle = "Cheating during testing script",
+    LoadingTitle = "Coconut Hub",
     LoadingSubtitle = "by Coconut",
     Theme = "Default",
     DisableRayfieldPrompts = false,
@@ -177,16 +177,12 @@ local function StopPlayerESP()
 end
 
 -- ============================================================
--- // THIRD PERSON & CAMERA LOCK
+-- // THIRD PERSON
 -- ============================================================
 local ThirdPersonEnabled = false
-local CamLockEnabled = false
-local LockedTargetPos = nil
-
 local camConn = nil
 local inputConn1 = nil
 local inputConn2 = nil
-local inputConn3 = nil
 local savedCamType = nil
 local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 
@@ -199,12 +195,10 @@ local lastTouchPos  = nil
 local CamGui = nil
 
 -- ============================================================
--- // QUICK TOGGLE BUTTONS ON SCREEN
+-- // QUICK TOGGLE BUTTON ON SCREEN
 -- ============================================================
 local QuickBtnGui = nil
 local QuickBtnVisible = false
-local CamLockBtnGui = nil
-local CamLockBtnVisible = false
 
 local function UpdateQuickBtn(enabled)
     if not QuickBtnGui then return end
@@ -214,16 +208,6 @@ local function UpdateQuickBtn(enabled)
     btn.BackgroundColor3 = enabled
         and Color3.fromRGB(35, 150, 35)
         or  Color3.fromRGB(35, 35, 80)
-end
-
-local function UpdateCamLockBtn(enabled)
-    if not CamLockBtnGui then return end
-    local btn = CamLockBtnGui:FindFirstChild("CamLockBtn")
-    if not btn then return end
-    btn.Text             = enabled and "LOCK\nON" or "LOCK\nOFF"
-    btn.BackgroundColor3 = enabled
-        and Color3.fromRGB(150, 35, 35)
-        or  Color3.fromRGB(80, 35, 35)
 end
 
 local function CreateQuickToggleBtn()
@@ -258,9 +242,11 @@ local function CreateQuickToggleBtn()
     BtnStroke.Thickness = 2
     BtnStroke.Parent    = Btn
 
+    -- Drag
     local dragging, moved, dragStart, startPos = false, false, nil, nil
     Btn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
             dragging  = true
             moved     = false
             dragStart = Vector2.new(input.Position.X, input.Position.Y)
@@ -269,14 +255,19 @@ local function CreateQuickToggleBtn()
     end)
     UIS.InputChanged:Connect(function(input)
         if not dragging then return end
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseMovement
+            or input.UserInputType == Enum.UserInputType.Touch then
             local delta = Vector2.new(input.Position.X, input.Position.Y) - dragStart
             if delta.Magnitude > 6 then moved = true end
-            Btn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            Btn.Position = UDim2.new(
+                startPos.X.Scale, startPos.X.Offset + delta.X,
+                startPos.Y.Scale, startPos.Y.Offset + delta.Y
+            )
         end
     end)
     UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+            or input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
         end
     end)
@@ -286,11 +277,14 @@ local function CreateQuickToggleBtn()
         ThirdPersonEnabled = not ThirdPersonEnabled
         UpdateQuickBtn(ThirdPersonEnabled)
         if ThirdPersonEnabled then
+            -- Goi StartThirdPerson neu chua chay
             if not camConn then
                 local ok, err = pcall(function()
                     local cam = workspace.CurrentCamera
                     savedCamType = cam.CameraType
-                    angleX, angleY, distance = 0, 20, 10
+                    angleX   = 0
+                    angleY   = 20
+                    distance = 10
                     DisableGameCameraScripts()
                     if isMobile then CreateMobileZoomButtons() end
                     StartCamLoop()
@@ -303,92 +297,20 @@ local function CreateQuickToggleBtn()
     end)
 end
 
-local function CreateCamLockBtn()
-    if CamLockBtnGui then CamLockBtnGui:Destroy() end
-
-    CamLockBtnGui = Instance.new("ScreenGui")
-    CamLockBtnGui.Name           = "CoconutCamLock"
-    CamLockBtnGui.ResetOnSpawn   = false
-    CamLockBtnGui.IgnoreGuiInset = true
-    CamLockBtnGui.DisplayOrder   = 2
-    CamLockBtnGui.Parent         = CoreGui
-
-    local Btn = Instance.new("TextButton")
-    Btn.Name             = "CamLockBtn"
-    Btn.Size             = UDim2.new(0, 54, 0, 54)
-    Btn.Position         = UDim2.new(0, 10, 0, 74) -- Nằm ngay dưới nút 3RD
-    Btn.BackgroundColor3 = CamLockEnabled
-        and Color3.fromRGB(150, 35, 35)
-        or  Color3.fromRGB(80, 35, 35)
-    Btn.Text             = CamLockEnabled and "LOCK\nON" or "LOCK\nOFF"
-    Btn.TextColor3       = Color3.fromRGB(255, 255, 255)
-    Btn.Font             = Enum.Font.GothamBold
-    Btn.TextSize         = 11
-    Btn.BorderSizePixel  = 0
-    Btn.AutoButtonColor  = false
-    Btn.ZIndex           = 10
-    Btn.Parent           = CamLockBtnGui
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(1, 0)
-
-    local BtnStroke = Instance.new("UIStroke")
-    BtnStroke.Color     = Color3.fromRGB(220, 60, 60)
-    BtnStroke.Thickness = 2
-    BtnStroke.Parent    = Btn
-
-    local dragging, moved, dragStart, startPos = false, false, nil, nil
-    Btn.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging  = true
-            moved     = false
-            dragStart = Vector2.new(input.Position.X, input.Position.Y)
-            startPos  = Btn.Position
-        end
-    end)
-    UIS.InputChanged:Connect(function(input)
-        if not dragging then return end
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            local delta = Vector2.new(input.Position.X, input.Position.Y) - dragStart
-            if delta.Magnitude > 6 then moved = true end
-            Btn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-    UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-
-    Btn.MouseButton1Click:Connect(function()
-        if moved then moved = false return end
-        CamLockEnabled = not CamLockEnabled
-        UpdateCamLockBtn(CamLockEnabled)
-        
-        if CamLockEnabled then
-            local char = LocalPlayer.Character
-            local root = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart"))
-            if root then
-                LockedTargetPos = root.Position + Vector3.new(0, 2, 0)
-            end
-        else
-            LockedTargetPos = nil
-            if not isMobile then UIS.MouseBehavior = Enum.MouseBehavior.Default end
-        end
-    end)
-end
-
 local function DestroyQuickBtn()
-    if QuickBtnGui then QuickBtnGui:Destroy() QuickBtnGui = nil end
-end
-
-local function DestroyCamLockBtn()
-    if CamLockBtnGui then CamLockBtnGui:Destroy() CamLockBtnGui = nil end
+    if QuickBtnGui then
+        QuickBtnGui:Destroy()
+        QuickBtnGui = nil
+    end
 end
 
 -- ============================================================
 -- // CAMERA HELPERS
 -- ============================================================
 local function CreateMobileZoomButtons()
+    -- Sudah ada di CamGui, skip jika sudah ada
     if CamGui then CamGui:Destroy() end
+
     CamGui = Instance.new("ScreenGui")
     CamGui.Name           = "CoconutCamZoom"
     CamGui.ResetOnSpawn   = false
@@ -397,21 +319,51 @@ local function CreateMobileZoomButtons()
     CamGui.Parent         = CoreGui
 
     local ZoomIn = Instance.new("TextButton")
-    ZoomIn.Size, ZoomIn.Position = UDim2.new(0, 36, 0, 36), UDim2.new(1, -80, 0, 10)
-    ZoomIn.BackgroundColor3, ZoomIn.BackgroundTransparency = Color3.fromRGB(30, 20, 60), 0.3
-    ZoomIn.Text, ZoomIn.TextColor3 = "+", Color3.fromRGB(255, 255, 255)
-    ZoomIn.Font, ZoomIn.TextSize, ZoomIn.ZIndex, ZoomIn.Parent = Enum.Font.GothamBold, 18, 2, CamGui
+    ZoomIn.Size             = UDim2.new(0, 36, 0, 36)
+    ZoomIn.Position         = UDim2.new(1, -80, 0, 10)
+    ZoomIn.BackgroundColor3 = Color3.fromRGB(30, 20, 60)
+    ZoomIn.BackgroundTransparency = 0.3
+    ZoomIn.Text             = "+"
+    ZoomIn.TextColor3       = Color3.fromRGB(255, 255, 255)
+    ZoomIn.Font             = Enum.Font.GothamBold
+    ZoomIn.TextSize         = 18
+    ZoomIn.BorderSizePixel  = 0
+    ZoomIn.ZIndex           = 2
+    ZoomIn.Parent           = CamGui
     Instance.new("UICorner", ZoomIn).CornerRadius = UDim.new(0, 8)
 
     local ZoomOut = Instance.new("TextButton")
-    ZoomOut.Size, ZoomOut.Position = UDim2.new(0, 36, 0, 36), UDim2.new(1, -40, 0, 10)
-    ZoomOut.BackgroundColor3, ZoomOut.BackgroundTransparency = Color3.fromRGB(30, 20, 60), 0.3
-    ZoomOut.Text, ZoomOut.TextColor3 = "-", Color3.fromRGB(255, 255, 255)
-    ZoomOut.Font, ZoomOut.TextSize, ZoomOut.ZIndex, ZoomOut.Parent = Enum.Font.GothamBold, 18, 2, CamGui
+    ZoomOut.Size             = UDim2.new(0, 36, 0, 36)
+    ZoomOut.Position         = UDim2.new(1, -40, 0, 10)
+    ZoomOut.BackgroundColor3 = Color3.fromRGB(30, 20, 60)
+    ZoomOut.BackgroundTransparency = 0.3
+    ZoomOut.Text             = "-"
+    ZoomOut.TextColor3       = Color3.fromRGB(255, 255, 255)
+    ZoomOut.Font             = Enum.Font.GothamBold
+    ZoomOut.TextSize         = 18
+    ZoomOut.BorderSizePixel  = 0
+    ZoomOut.ZIndex           = 2
+    ZoomOut.Parent           = CamGui
     Instance.new("UICorner", ZoomOut).CornerRadius = UDim.new(0, 8)
 
-    ZoomIn.MouseButton1Click:Connect(function() distance = math.max(3, distance - 2) end)
-    ZoomOut.MouseButton1Click:Connect(function() distance = math.min(50, distance + 2) end)
+    local HintLbl = Instance.new("TextLabel")
+    HintLbl.Size               = UDim2.new(0, 160, 0, 18)
+    HintLbl.Position           = UDim2.new(1, -168, 0, 52)
+    HintLbl.BackgroundTransparency = 1
+    HintLbl.Text               = "1 finger drag = rotate"
+    HintLbl.TextColor3         = Color3.fromRGB(180, 180, 180)
+    HintLbl.Font               = Enum.Font.Gotham
+    HintLbl.TextSize           = 10
+    HintLbl.TextXAlignment     = Enum.TextXAlignment.Right
+    HintLbl.ZIndex             = 2
+    HintLbl.Parent             = CamGui
+
+    ZoomIn.MouseButton1Click:Connect(function()
+        distance = math.max(3, distance - 2)
+    end)
+    ZoomOut.MouseButton1Click:Connect(function()
+        distance = math.min(50, distance + 2)
+    end)
 end
 
 local function DisableGameCameraScripts()
@@ -448,6 +400,7 @@ end
 
 local function StartCamLoop()
     local cam = workspace.CurrentCamera
+    local lastMousePos = nil
 
     if isMobile then
         inputConn1 = UIS.InputBegan:Connect(function(input)
@@ -462,7 +415,8 @@ local function StartCamLoop()
 
         inputConn2 = UIS.InputChanged:Connect(function(input)
             if not ThirdPersonEnabled then return end
-            if input.UserInputType == Enum.UserInputType.Touch and input == activeTouchId then
+            if input.UserInputType == Enum.UserInputType.Touch
+                and input == activeTouchId then
                 local cur = Vector2.new(input.Position.X, input.Position.Y)
                 if lastTouchPos then
                     local dx = cur.X - lastTouchPos.X
@@ -476,27 +430,18 @@ local function StartCamLoop()
             end
         end)
 
-        inputConn3 = UIS.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.Touch and input == activeTouchId then
+        UIS.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch
+                and input == activeTouchId then
                 activeTouchId = nil
                 lastTouchPos  = nil
             end
         end)
     else
-        -- Logic mượt hơn cho PC: dùng Delta để bắt chuyển động chuột chuẩn xác
         inputConn1 = UIS.InputChanged:Connect(function(input)
             if not ThirdPersonEnabled then return end
             if input.UserInputType == Enum.UserInputType.MouseWheel then
                 distance = math.clamp(distance - input.Position.Z * 2, 3, 50)
-            end
-            if input.UserInputType == Enum.UserInputType.MouseMovement then
-                -- Cho phép xoay khi đang giữ chuột phải HOẶC đang bật khóa camera
-                if CamLockEnabled or UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-                    local dx = input.Delta.X
-                    local dy = input.Delta.Y
-                    angleX = angleX - dx * 0.35
-                    angleY = math.clamp(angleY - dy * 0.35, -75, 75)
-                end
             end
         end)
     end
@@ -505,30 +450,27 @@ local function StartCamLoop()
         if not ThirdPersonEnabled then return end
 
         local char = LocalPlayer.Character
-        local root = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart"))
+        local root = char and (
+            char:FindFirstChild("HumanoidRootPart") or
+            char:FindFirstChildWhichIsA("BasePart")
+        )
         if not root then return end
 
         cam.CameraType = Enum.CameraType.Scriptable
 
-        -- Xử lý Lock Center cho PC
-        if CamLockEnabled and not isMobile then
-            UIS.MouseBehavior = Enum.MouseBehavior.LockCenter
-        elseif not isMobile then
-            UIS.MouseBehavior = Enum.MouseBehavior.Default
-        end
-
-        -- Logic Khóa Vị Trí Camera
-        local targetPos
-        if CamLockEnabled and LockedTargetPos then
-            targetPos = LockedTargetPos
-        else
-            targetPos = root.Position + Vector3.new(0, 2, 0)
-            if CamLockEnabled then
-                LockedTargetPos = targetPos
+        if not isMobile then
+            local mousePos = UIS:GetMouseLocation()
+            if lastMousePos and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+                local dx = mousePos.X - lastMousePos.X
+                local dy = mousePos.Y - lastMousePos.Y
+                angleX = angleX - dx * 0.35
+                angleY = math.clamp(angleY - dy * 0.35, -75, 75)
             end
+            lastMousePos = mousePos
         end
 
-        local cf = CFrame.new(targetPos)
+        local rootPos = root.Position + Vector3.new(0, 2, 0)
+        local cf = CFrame.new(rootPos)
             * CFrame.Angles(0, math.rad(angleX), 0)
             * CFrame.Angles(math.rad(angleY), 0, 0)
             * CFrame.new(0, 0, distance)
@@ -549,14 +491,9 @@ local function StopThirdPersonInternal()
     if camConn    then camConn:Disconnect()    camConn    = nil end
     if inputConn1 then inputConn1:Disconnect() inputConn1 = nil end
     if inputConn2 then inputConn2:Disconnect() inputConn2 = nil end
-    if inputConn3 then inputConn3:Disconnect() inputConn3 = nil end
     if CamGui     then CamGui:Destroy()        CamGui     = nil end
-    
     activeTouchId = nil
     lastTouchPos  = nil
-    LockedTargetPos = nil
-    if not isMobile then UIS.MouseBehavior = Enum.MouseBehavior.Default end
-    
     EnableGameCameraScripts()
     local cam = workspace.CurrentCamera
     if savedCamType then cam.CameraType = savedCamType end
@@ -565,7 +502,9 @@ end
 local function StartThirdPerson()
     local cam = workspace.CurrentCamera
     savedCamType = cam.CameraType
-    angleX, angleY, distance = 0, 20, 10
+    angleX   = 0
+    angleY   = 20
+    distance = 10
     DisableGameCameraScripts()
     if isMobile then CreateMobileZoomButtons() end
     StartCamLoop()
@@ -643,41 +582,11 @@ PlayerTab:CreateToggle({
     Flag         = "ShowTPBtn",
     Callback     = function(val)
         QuickBtnVisible = val
-        if val then CreateQuickToggleBtn() else DestroyQuickBtn() end
-    end,
-})
-
-PlayerTab:CreateDivider()
-
--- CAMERA LOCK TOGGLE
-PlayerTab:CreateToggle({
-    Name         = "Camera Lock (Freeze Cam Position)",
-    CurrentValue = false,
-    Flag         = "CamLock",
-    Callback     = function(val)
-        CamLockEnabled = val
-        UpdateCamLockBtn(val)
-        
         if val then
-            local char = LocalPlayer.Character
-            local root = char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChildWhichIsA("BasePart"))
-            if root then
-                LockedTargetPos = root.Position + Vector3.new(0, 2, 0)
-            end
+            CreateQuickToggleBtn()
         else
-            LockedTargetPos = nil
-            if not isMobile then UIS.MouseBehavior = Enum.MouseBehavior.Default end
+            DestroyQuickBtn()
         end
-    end,
-})
-
-PlayerTab:CreateToggle({
-    Name         = "Show Button In Screen (Camera Lock)",
-    CurrentValue = false,
-    Flag         = "ShowCamLockBtn",
-    Callback     = function(val)
-        CamLockBtnVisible = val
-        if val then CreateCamLockBtn() else DestroyCamLockBtn() end
     end,
 })
 
