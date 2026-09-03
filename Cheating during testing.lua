@@ -15,11 +15,12 @@ local Window = Rayfield:CreateWindow({
 -- ============================================================
 -- // SERVICES
 -- ============================================================
-local Players = game:GetService("Players")
+local Players    = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
+local UIS        = game:GetService("UserInputService")
+local Lighting   = game:GetService("Lighting")
 local LocalPlayer = Players.LocalPlayer
-local CoreGui = game:GetService("CoreGui")
+local CoreGui    = game:GetService("CoreGui")
 
 -- ============================================================
 -- // ESP CONFIG & CORE
@@ -32,33 +33,22 @@ local ESPObjects = {}
 
 local function BuildHighlight(adornee, fillColor, outlineColor)
     local hl = Instance.new("Highlight")
-    hl.FillColor           = fillColor
-    hl.OutlineColor        = outlineColor
-    hl.FillTransparency    = 0.6
-    hl.OutlineTransparency = 0
-    hl.DepthMode           = Enum.HighlightDepthMode.AlwaysOnTop
-    hl.Adornee             = adornee
-    hl.Parent              = adornee
+    hl.FillColor = fillColor hl.OutlineColor = outlineColor
+    hl.FillTransparency = 0.6 hl.OutlineTransparency = 0
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    hl.Adornee = adornee hl.Parent = adornee
     return hl
 end
 
 local function BuildBillboard(adornee, text, textColor)
     local bb = Instance.new("BillboardGui")
-    bb.AlwaysOnTop = true
-    bb.Size        = UDim2.new(0, 120, 0, 40)
-    bb.StudsOffset = Vector3.new(0, 3, 0)
-    bb.Adornee     = adornee
-    bb.Parent      = CoreGui
+    bb.AlwaysOnTop = true bb.Size = UDim2.new(0,120,0,40)
+    bb.StudsOffset = Vector3.new(0,3,0) bb.Adornee = adornee bb.Parent = CoreGui
     local lbl = Instance.new("TextLabel")
-    lbl.Size                   = UDim2.new(1, 0, 1, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.Text                   = text
-    lbl.TextColor3             = textColor
-    lbl.Font                   = Enum.Font.GothamBold
-    lbl.TextSize               = 13
-    lbl.TextStrokeTransparency = 0.3
-    lbl.TextStrokeColor3       = Color3.new(0, 0, 0)
-    lbl.Parent                 = bb
+    lbl.Size = UDim2.new(1,0,1,0) lbl.BackgroundTransparency = 1
+    lbl.Text = text lbl.TextColor3 = textColor lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 13 lbl.TextStrokeTransparency = 0.3
+    lbl.TextStrokeColor3 = Color3.new(0,0,0) lbl.Parent = bb
     return bb, lbl
 end
 
@@ -79,11 +69,8 @@ end
 local function UpdateESPColors(espType, color)
     for _, data in pairs(ESPObjects) do
         if data.Type == espType then
-            if data.Highlight then
-                data.Highlight.FillColor    = color
-                data.Highlight.OutlineColor = color
-            end
-            if data.NameLbl then data.NameLbl.TextColor3 = color end
+            if data.Highlight then data.Highlight.FillColor = color data.Highlight.OutlineColor = color end
+            if data.NameLbl   then data.NameLbl.TextColor3  = color end
         end
     end
 end
@@ -101,7 +88,7 @@ local function StartTeacherESP()
         local root = tm:FindFirstChild("HumanoidRootPart") or tm:FindFirstChildWhichIsA("BasePart")
         local bb, lbl = nil, nil
         if root then bb, lbl = BuildBillboard(root, "Teacher", ESPConfig.TeacherColor) end
-        ESPObjects["Teacher"] = { Highlight = hl, Billboard = bb, NameLbl = lbl, Type = "Teacher" }
+        ESPObjects["Teacher"] = { Highlight=hl, Billboard=bb, NameLbl=lbl, Type="Teacher" }
     end
     local tm = workspace:FindFirstChild("Teacher")
     if tm then AttachTeacher(tm) end
@@ -122,8 +109,7 @@ end
 -- // PLAYER ESP
 -- ============================================================
 local PlayerESPEnabled = false
-local playerAddedConn = nil
-local playerRemovingConn = nil
+local playerAddedConn, playerRemovingConn = nil, nil
 
 local function CreatePlayerESP(player)
     if player == LocalPlayer then return end
@@ -134,7 +120,7 @@ local function CreatePlayerESP(player)
         if not root then return end
         local hl = BuildHighlight(char, ESPConfig.PlayerColor, ESPConfig.PlayerColor)
         local bb, lbl = BuildBillboard(root, player.DisplayName, ESPConfig.PlayerColor)
-        ESPObjects[key] = { Highlight = hl, Billboard = bb, NameLbl = lbl, Type = "Player" }
+        ESPObjects[key] = { Highlight=hl, Billboard=bb, NameLbl=lbl, Type="Player" }
     end
     if player.Character then task.spawn(Attach, player.Character) end
     player.CharacterAdded:Connect(function(char)
@@ -148,7 +134,7 @@ local function StartPlayerESP()
         if PlayerESPEnabled then task.spawn(CreatePlayerESP, p) end
     end)
     playerRemovingConn = Players.PlayerRemoving:Connect(function(p)
-        RemoveESP("Player_" .. p.UserId)
+        RemoveESP("Player_"..p.UserId)
     end)
 end
 
@@ -159,13 +145,59 @@ local function StopPlayerESP()
 end
 
 -- ============================================================
+-- // FULLBRIGHT
+-- ============================================================
+local FullbrightEnabled = false
+local savedAmbient, savedOutdoor, savedBrightness, savedFogEnd = nil, nil, nil, nil
+
+local function StartFullbright()
+    savedAmbient    = Lighting.Ambient
+    savedOutdoor    = Lighting.OutdoorAmbient
+    savedBrightness = Lighting.Brightness
+    savedFogEnd     = Lighting.FogEnd
+    Lighting.Ambient        = Color3.fromRGB(255,255,255)
+    Lighting.OutdoorAmbient = Color3.fromRGB(255,255,255)
+    Lighting.Brightness     = 2
+    Lighting.FogEnd         = 100000
+    for _, fx in ipairs(Lighting:GetChildren()) do
+        if fx:IsA("BlurEffect") or fx:IsA("ColorCorrectionEffect")
+            or fx:IsA("SunRaysEffect") or fx:IsA("DepthOfFieldEffect") then
+            pcall(function() fx.Enabled = false end)
+        end
+    end
+end
+
+local function StopFullbright()
+    if savedAmbient    then Lighting.Ambient        = savedAmbient    end
+    if savedOutdoor    then Lighting.OutdoorAmbient = savedOutdoor    end
+    if savedBrightness then Lighting.Brightness     = savedBrightness end
+    if savedFogEnd     then Lighting.FogEnd         = savedFogEnd     end
+    for _, fx in ipairs(Lighting:GetChildren()) do
+        if fx:IsA("BlurEffect") or fx:IsA("ColorCorrectionEffect")
+            or fx:IsA("SunRaysEffect") or fx:IsA("DepthOfFieldEffect") then
+            pcall(function() fx.Enabled = true end)
+        end
+    end
+end
+
+-- ============================================================
+-- // FIX LAG
+-- ============================================================
+local function FixLag()
+    settings().Rendering.QualityLevel = 1
+    for _, p in ipairs(workspace:GetDescendants()) do
+        if p:IsA("ParticleEmitter") or p:IsA("Trail") or p:IsA("Beam") then
+            pcall(function() p.Enabled = false end)
+        end
+    end
+    Rayfield:Notify({ Title="Fix Lag", Content="Quality set to 1, particles disabled.", Duration=3 })
+end
+
+-- ============================================================
 -- // THIRD PERSON
 -- ============================================================
 local ThirdPersonEnabled = false
-local camConn = nil
-local inputConn1 = nil
-local inputConn2 = nil
-local savedCamType = nil
+local camConn, inputConn1, inputConn2, savedCamType = nil, nil, nil, nil
 local isMobile = UIS.TouchEnabled and not UIS.KeyboardEnabled
 local angleX, angleY, distance = 0, 20, 10
 local activeTouchId, lastTouchPos = nil, nil
@@ -184,50 +216,49 @@ local function DestroyQuickBtn()
 end
 
 local function DisableGameCameraScripts()
-    local function DisableIn(p)
+    local function D(p)
         for _, s in ipairs(p:GetDescendants()) do
-            if (s:IsA("LocalScript") or s:IsA("ModuleScript")) then
+            if s:IsA("LocalScript") or s:IsA("ModuleScript") then
                 local n = s.Name:lower()
                 if n:find("camera") or n:find("cam") then pcall(function() s.Disabled = true end) end
             end
         end
     end
-    DisableIn(workspace)
+    D(workspace)
     local ps = LocalPlayer:FindFirstChild("PlayerScripts")
-    if ps then DisableIn(ps) end
+    if ps then D(ps) end
 end
 
 local function EnableGameCameraScripts()
-    local function EnableIn(p)
+    local function E(p)
         for _, s in ipairs(p:GetDescendants()) do
-            if (s:IsA("LocalScript") or s:IsA("ModuleScript")) then
+            if s:IsA("LocalScript") or s:IsA("ModuleScript") then
                 local n = s.Name:lower()
                 if n:find("camera") or n:find("cam") then pcall(function() s.Disabled = false end) end
             end
         end
     end
-    EnableIn(workspace)
+    E(workspace)
     local ps = LocalPlayer:FindFirstChild("PlayerScripts")
-    if ps then EnableIn(ps) end
+    if ps then E(ps) end
 end
 
 local function CreateMobileZoomButtons()
     if CamGui then CamGui:Destroy() end
     CamGui = Instance.new("ScreenGui")
-    CamGui.Name = "CoconutCamZoom" CamGui.ResetOnSpawn = false
-    CamGui.IgnoreGuiInset = true CamGui.DisplayOrder = 1 CamGui.Parent = CoreGui
-    local function MkZBtn(txt, x)
+    CamGui.Name="CoconutCamZoom" CamGui.ResetOnSpawn=false
+    CamGui.IgnoreGuiInset=true CamGui.DisplayOrder=1 CamGui.Parent=CoreGui
+    local function MkZ(txt, x)
         local b = Instance.new("TextButton")
-        b.Size = UDim2.new(0,36,0,36) b.Position = UDim2.new(1,x,0,10)
-        b.BackgroundColor3 = Color3.fromRGB(30,20,60) b.BackgroundTransparency = 0.3
-        b.Text = txt b.TextColor3 = Color3.fromRGB(255,255,255)
-        b.Font = Enum.Font.GothamBold b.TextSize = 18 b.BorderSizePixel = 0 b.ZIndex = 2
-        b.Parent = CamGui Instance.new("UICorner",b).CornerRadius = UDim.new(0,8) return b
+        b.Size=UDim2.new(0,36,0,36) b.Position=UDim2.new(1,x,0,10)
+        b.BackgroundColor3=Color3.fromRGB(30,20,60) b.BackgroundTransparency=0.3
+        b.Text=txt b.TextColor3=Color3.fromRGB(255,255,255) b.Font=Enum.Font.GothamBold
+        b.TextSize=18 b.BorderSizePixel=0 b.ZIndex=2 b.Parent=CamGui
+        Instance.new("UICorner",b).CornerRadius=UDim.new(0,8) return b
     end
-    local zi = MkZBtn("+", -80)
-    local zo = MkZBtn("-", -40)
-    zi.MouseButton1Click:Connect(function() distance = math.max(3, distance-2) end)
-    zo.MouseButton1Click:Connect(function() distance = math.min(50, distance+2) end)
+    local zi=MkZ("+", -80) local zo=MkZ("-", -40)
+    zi.MouseButton1Click:Connect(function() distance=math.max(3,distance-2) end)
+    zo.MouseButton1Click:Connect(function() distance=math.min(50,distance+2) end)
 end
 
 local function StartCamLoop()
@@ -236,35 +267,33 @@ local function StartCamLoop()
     if isMobile then
         inputConn1 = UIS.InputBegan:Connect(function(input)
             if not ThirdPersonEnabled then return end
-            if input.UserInputType == Enum.UserInputType.Touch and activeTouchId == nil then
-                activeTouchId = input
-                lastTouchPos  = Vector2.new(input.Position.X, input.Position.Y)
+            if input.UserInputType==Enum.UserInputType.Touch and activeTouchId==nil then
+                activeTouchId=input lastTouchPos=Vector2.new(input.Position.X,input.Position.Y)
             end
         end)
         inputConn2 = UIS.InputChanged:Connect(function(input)
             if not ThirdPersonEnabled then return end
-            if input.UserInputType == Enum.UserInputType.Touch and input == activeTouchId then
-                local cur = Vector2.new(input.Position.X, input.Position.Y)
+            if input.UserInputType==Enum.UserInputType.Touch and input==activeTouchId then
+                local cur=Vector2.new(input.Position.X,input.Position.Y)
                 if lastTouchPos then
-                    local dx, dy = cur.X-lastTouchPos.X, cur.Y-lastTouchPos.Y
+                    local dx,dy=cur.X-lastTouchPos.X,cur.Y-lastTouchPos.Y
                     if math.abs(dx)<60 and math.abs(dy)<60 then
-                        angleX = angleX - dx*0.3
-                        angleY = math.clamp(angleY - dy*0.3, -75, 75)
+                        angleX=angleX-dx*0.3 angleY=math.clamp(angleY-dy*0.3,-75,75)
                     end
                 end
-                lastTouchPos = cur
+                lastTouchPos=cur
             end
         end)
         UIS.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.Touch and input == activeTouchId then
-                activeTouchId = nil lastTouchPos = nil
+            if input.UserInputType==Enum.UserInputType.Touch and input==activeTouchId then
+                activeTouchId=nil lastTouchPos=nil
             end
         end)
     else
         inputConn1 = UIS.InputChanged:Connect(function(input)
             if not ThirdPersonEnabled then return end
-            if input.UserInputType == Enum.UserInputType.MouseWheel then
-                distance = math.clamp(distance - input.Position.Z*2, 3, 50)
+            if input.UserInputType==Enum.UserInputType.MouseWheel then
+                distance=math.clamp(distance-input.Position.Z*2,3,50)
             end
         end)
     end
@@ -277,18 +306,18 @@ local function StartCamLoop()
         if not isMobile then
             local mp = UIS:GetMouseLocation()
             if lastMousePos and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
-                angleX = angleX - (mp.X-lastMousePos.X)*0.35
-                angleY = math.clamp(angleY - (mp.Y-lastMousePos.Y)*0.35, -75, 75)
+                angleX=angleX-(mp.X-lastMousePos.X)*0.35
+                angleY=math.clamp(angleY-(mp.Y-lastMousePos.Y)*0.35,-75,75)
             end
-            lastMousePos = mp
+            lastMousePos=mp
         end
         cam.CFrame = CFrame.new(root.Position+Vector3.new(0,2,0))
-            * CFrame.Angles(0,math.rad(angleX),0)
-            * CFrame.Angles(math.rad(angleY),0,0)
-            * CFrame.new(0,0,distance)
+            *CFrame.Angles(0,math.rad(angleX),0)
+            *CFrame.Angles(math.rad(angleY),0,0)
+            *CFrame.new(0,0,distance)
         if char then
             for _, p in ipairs(char:GetDescendants()) do
-                if p:IsA("BasePart") or p:IsA("Decal") then p.LocalTransparencyModifier = 0 end
+                if p:IsA("BasePart") or p:IsA("Decal") then p.LocalTransparencyModifier=0 end
             end
         end
     end)
@@ -299,31 +328,29 @@ local function StopThirdPersonInternal()
     if inputConn1 then inputConn1:Disconnect() inputConn1 = nil end
     if inputConn2 then inputConn2:Disconnect() inputConn2 = nil end
     if CamGui     then CamGui:Destroy()        CamGui     = nil end
-    activeTouchId = nil lastTouchPos = nil
+    activeTouchId=nil lastTouchPos=nil
     EnableGameCameraScripts()
-    if savedCamType then workspace.CurrentCamera.CameraType = savedCamType end
+    if savedCamType then workspace.CurrentCamera.CameraType=savedCamType end
 end
 
 local function StartThirdPerson()
-    savedCamType = workspace.CurrentCamera.CameraType
+    savedCamType=workspace.CurrentCamera.CameraType
     angleX=0 angleY=20 distance=10
     DisableGameCameraScripts()
     if isMobile then CreateMobileZoomButtons() end
-    StartCamLoop()
-    UpdateQuickBtn(true)
+    StartCamLoop() UpdateQuickBtn(true)
 end
 
 local function StopThirdPerson()
-    StopThirdPersonInternal()
-    UpdateQuickBtn(false)
+    StopThirdPersonInternal() UpdateQuickBtn(false)
 end
 
 local function CreateQuickToggleBtn()
     DestroyQuickBtn()
-    QuickBtnGui = Instance.new("ScreenGui")
+    QuickBtnGui=Instance.new("ScreenGui")
     QuickBtnGui.Name="CoconutQuickTP" QuickBtnGui.ResetOnSpawn=false
     QuickBtnGui.IgnoreGuiInset=true QuickBtnGui.DisplayOrder=2 QuickBtnGui.Parent=CoreGui
-    local Btn = Instance.new("TextButton")
+    local Btn=Instance.new("TextButton")
     Btn.Name="QuickBtn" Btn.Size=UDim2.new(0,54,0,54) Btn.Position=UDim2.new(0,10,0,10)
     Btn.BackgroundColor3=ThirdPersonEnabled and Color3.fromRGB(35,150,35) or Color3.fromRGB(35,35,80)
     Btn.Text=ThirdPersonEnabled and "3RD\nON" or "3RD\nOFF"
@@ -353,292 +380,224 @@ local function CreateQuickToggleBtn()
         if moved then moved=false return end
         ThirdPersonEnabled=not ThirdPersonEnabled
         UpdateQuickBtn(ThirdPersonEnabled)
-        if ThirdPersonEnabled then
-            if not camConn then pcall(StartThirdPerson) end
+        if ThirdPersonEnabled then if not camConn then pcall(StartThirdPerson) end
         else StopThirdPersonInternal() end
     end)
 end
 
 -- ============================================================
--- // PHONE SCREEN — REALTIME SCREENGUI MIRROR
+-- // PHONE SCREEN
 -- ============================================================
 local PhoneScreenEnabled = false
 local PhoneDragEnabled   = false
 local PhoneResizeEnabled = false
-local TargetSizeX        = 50   -- default
-local TargetSizeY        = 100  -- default
+local TargetSizeX        = 50
+local TargetSizeY        = 100
 
 local PhoneScreenGui = Instance.new("ScreenGui")
-PhoneScreenGui.Name           = "CoconutPhoneScreen"
-PhoneScreenGui.ResetOnSpawn   = false
-PhoneScreenGui.DisplayOrder   = 5
-PhoneScreenGui.IgnoreGuiInset = true
-PhoneScreenGui.Parent         = CoreGui
+PhoneScreenGui.Name="CoconutPhoneScreen" PhoneScreenGui.ResetOnSpawn=false
+PhoneScreenGui.DisplayOrder=5 PhoneScreenGui.IgnoreGuiInset=true PhoneScreenGui.Parent=CoreGui
 
 local PhoneFrame = Instance.new("Frame")
-PhoneFrame.AnchorPoint      = Vector2.new(1, 0)
-PhoneFrame.Position         = UDim2.new(1, -10, 0, 60)
-PhoneFrame.Size             = UDim2.new(0, TargetSizeX, 0, TargetSizeY)
-PhoneFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-PhoneFrame.BorderSizePixel  = 0
-PhoneFrame.ClipsDescendants = true
-PhoneFrame.Visible          = false
-PhoneFrame.Parent           = PhoneScreenGui
-Instance.new("UICorner", PhoneFrame).CornerRadius = UDim.new(0, 6)
+PhoneFrame.AnchorPoint=Vector2.new(1,0) PhoneFrame.Position=UDim2.new(1,-10,0,60)
+PhoneFrame.Size=UDim2.new(0,TargetSizeX,0,TargetSizeY) PhoneFrame.BackgroundColor3=Color3.fromRGB(0,0,0)
+PhoneFrame.BorderSizePixel=0 PhoneFrame.ClipsDescendants=true PhoneFrame.Visible=false PhoneFrame.Parent=PhoneScreenGui
+Instance.new("UICorner",PhoneFrame).CornerRadius=UDim.new(0,6)
+local PhoneStroke=Instance.new("UIStroke") PhoneStroke.Color=Color3.fromRGB(90,35,200) PhoneStroke.Thickness=2 PhoneStroke.Parent=PhoneFrame
 
-local PhoneStroke = Instance.new("UIStroke")
-PhoneStroke.Color = Color3.fromRGB(90,35,200) PhoneStroke.Thickness = 2 PhoneStroke.Parent = PhoneFrame
+local ContentContainer=Instance.new("Frame")
+ContentContainer.Name="Content" ContentContainer.AnchorPoint=Vector2.new(0.5,0.5)
+ContentContainer.Position=UDim2.new(0.5,0,0.5,0) ContentContainer.BackgroundColor3=Color3.fromRGB(0,0,0)
+ContentContainer.BorderSizePixel=0 ContentContainer.ClipsDescendants=true ContentContainer.Parent=PhoneFrame
 
--- ViewportFrame approach: mirror SurfaceGui content bang UIClone realtime
-local ContentContainer = Instance.new("Frame")
-ContentContainer.Name             = "Content"
-ContentContainer.AnchorPoint      = Vector2.new(0.5, 0.5)
-ContentContainer.Position         = UDim2.new(0.5, 0, 0.5, 0)
-ContentContainer.BackgroundColor3 = Color3.fromRGB(0,0,0)
-ContentContainer.BorderSizePixel  = 0
-ContentContainer.ClipsDescendants = true
-ContentContainer.Parent           = PhoneFrame
+local PhoneScale=Instance.new("UIScale") PhoneScale.Parent=ContentContainer
 
-local PhoneScale = Instance.new("UIScale")
-PhoneScale.Parent = ContentContainer
+local DragBar=Instance.new("TextButton")
+DragBar.Size=UDim2.new(1,0,0,20) DragBar.Position=UDim2.new(0,0,0,0)
+DragBar.BackgroundColor3=Color3.fromRGB(30,20,60) DragBar.BackgroundTransparency=0.3
+DragBar.Text="drag" DragBar.TextColor3=Color3.fromRGB(180,180,180)
+DragBar.Font=Enum.Font.Gotham DragBar.TextSize=10 DragBar.BorderSizePixel=0
+DragBar.Visible=false DragBar.ZIndex=20 DragBar.Parent=PhoneFrame
+Instance.new("UICorner",DragBar).CornerRadius=UDim.new(0,4)
 
--- Drag bar
-local DragBar = Instance.new("TextButton")
-DragBar.Size              = UDim2.new(1,0,0,20)
-DragBar.Position          = UDim2.new(0,0,0,0)
-DragBar.BackgroundColor3  = Color3.fromRGB(30,20,60)
-DragBar.BackgroundTransparency = 0.3
-DragBar.Text              = "drag"
-DragBar.TextColor3        = Color3.fromRGB(180,180,180)
-DragBar.Font              = Enum.Font.Gotham
-DragBar.TextSize          = 10
-DragBar.BorderSizePixel   = 0
-DragBar.Visible           = false
-DragBar.ZIndex            = 20
-DragBar.Parent            = PhoneFrame
-Instance.new("UICorner", DragBar).CornerRadius = UDim.new(0,4)
-
-local fDragging, fStart, fPos = false, nil, nil
+local fDragging,fStart,fPos=false,nil,nil
 DragBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-        fDragging = true
-        fStart    = Vector2.new(input.Position.X, input.Position.Y)
-        fPos      = PhoneFrame.Position
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+        fDragging=true fStart=Vector2.new(input.Position.X,input.Position.Y) fPos=PhoneFrame.Position
     end
 end)
 UIS.InputChanged:Connect(function(input)
-    if fDragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch) then
-        local d = Vector2.new(input.Position.X, input.Position.Y) - fStart
-        PhoneFrame.Position = UDim2.new(fPos.X.Scale, fPos.X.Offset+d.X, fPos.Y.Scale, fPos.Y.Offset+d.Y)
+    if fDragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
+        local d=Vector2.new(input.Position.X,input.Position.Y)-fStart
+        PhoneFrame.Position=UDim2.new(fPos.X.Scale,fPos.X.Offset+d.X,fPos.Y.Scale,fPos.Y.Offset+d.Y)
     end
 end)
 UIS.InputEnded:Connect(function(input)
-    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-        fDragging = false
-    end
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then fDragging=false end
 end)
 
--- Resize handles — FIX: khong di chuyen frame khi tha tay
-local activeResizer, rStartMouse, rStartSize, rStartPos = nil, nil, nil, nil
+-- ============================================================
+-- // RESIZE — FIX: dung AbsolutePosition luu truoc, khong cap nhat Position khi resize E/S
+-- ============================================================
+local activeResizer,rStartMouse,rStartSize,rStartPos=nil,nil,nil,nil
+local resizeHandles={}
 
-local handleDefs = {
+local handleDefs={
     {Name="Top",    Size=UDim2.new(1,-20,0,10), Pos=UDim2.new(0,10,0,0),  Anchor=Vector2.new(0,0), Action="N"},
-    {Name="Bottom", Size=UDim2.new(1,-20,0,10), Pos=UDim2.new(0,10,1,0),  Anchor=Vector2.new(0,1), Action="S"},
+    {Name="Bottom", Size=UDim2.new(1,-20,0,10), Pos=UDim2.new(0,10,1,-10),Anchor=Vector2.new(0,1), Action="S"},
     {Name="Left",   Size=UDim2.new(0,10,1,-20), Pos=UDim2.new(0,0,0,10),  Anchor=Vector2.new(0,0), Action="W"},
-    {Name="Right",  Size=UDim2.new(0,10,1,-20), Pos=UDim2.new(1,0,0,10),  Anchor=Vector2.new(1,0), Action="E"},
-    {Name="TL",     Size=UDim2.new(0,15,0,15),  Pos=UDim2.new(0,0,0,0),   Anchor=Vector2.new(0,0), Action="NW"},
-    {Name="TR",     Size=UDim2.new(0,15,0,15),  Pos=UDim2.new(1,0,0,0),   Anchor=Vector2.new(1,0), Action="NE"},
-    {Name="BL",     Size=UDim2.new(0,15,0,15),  Pos=UDim2.new(0,0,1,0),   Anchor=Vector2.new(0,1), Action="SW"},
-    {Name="BR",     Size=UDim2.new(0,15,0,15),  Pos=UDim2.new(1,0,1,0),   Anchor=Vector2.new(1,1), Action="SE"},
+    {Name="Right",  Size=UDim2.new(0,10,1,-20), Pos=UDim2.new(1,-10,0,10),Anchor=Vector2.new(1,0), Action="E"},
+    {Name="TL",     Size=UDim2.new(0,14,0,14),  Pos=UDim2.new(0,0,0,0),   Anchor=Vector2.new(0,0), Action="NW"},
+    {Name="TR",     Size=UDim2.new(0,14,0,14),  Pos=UDim2.new(1,-14,0,0), Anchor=Vector2.new(0,0), Action="NE"},
+    {Name="BL",     Size=UDim2.new(0,14,0,14),  Pos=UDim2.new(0,0,1,-14), Anchor=Vector2.new(0,0), Action="SW"},
+    {Name="BR",     Size=UDim2.new(0,14,0,14),  Pos=UDim2.new(1,-14,1,-14),Anchor=Vector2.new(0,0),Action="SE"},
 }
-
-local resizeHandles = {}
 
 local function UpdatePhoneScale(surfaceGui)
     if not surfaceGui then return end
-    local canvas = surfaceGui.CanvasSize
-    if canvas and canvas.X > 0 and canvas.Y > 0 then
-        ContentContainer.Size = UDim2.new(0, canvas.X, 0, canvas.Y)
-        local sx = PhoneFrame.AbsoluteSize.X / canvas.X
-        local sy = PhoneFrame.AbsoluteSize.Y / canvas.Y
-        PhoneScale.Scale = math.min(sx, sy)
+    local canvas=surfaceGui.CanvasSize
+    if canvas and canvas.X>0 and canvas.Y>0 then
+        ContentContainer.Size=UDim2.new(0,canvas.X,0,canvas.Y)
+        local sx=PhoneFrame.AbsoluteSize.X/canvas.X
+        local sy=PhoneFrame.AbsoluteSize.Y/canvas.Y
+        PhoneScale.Scale=math.min(sx,sy)
     end
 end
 
 for _, def in ipairs(handleDefs) do
-    local h = Instance.new("TextButton")
-    h.Name = def.Name h.Size = def.Size h.Position = def.Pos h.AnchorPoint = def.Anchor
-    h.BackgroundColor3 = Color3.fromRGB(0,150,255) h.BackgroundTransparency = 0.4
-    h.Text = "" h.ZIndex = 21 h.Visible = false h.Parent = PhoneFrame
-    table.insert(resizeHandles, h)
+    local h=Instance.new("TextButton")
+    h.Name=def.Name h.Size=def.Size h.Position=def.Pos h.AnchorPoint=def.Anchor
+    h.BackgroundColor3=Color3.fromRGB(0,150,255) h.BackgroundTransparency=0.3
+    h.Text="" h.ZIndex=21 h.Visible=false h.Parent=PhoneFrame
+    table.insert(resizeHandles,h)
 
     h.InputBegan:Connect(function(input)
         if not PhoneResizeEnabled then return end
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
-            activeResizer = def.Action
-            rStartMouse   = Vector2.new(input.Position.X, input.Position.Y)
-            rStartSize    = PhoneFrame.AbsoluteSize
-            rStartPos     = PhoneFrame.AbsolutePosition
+        if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+            activeResizer=def.Action
+            rStartMouse=Vector2.new(input.Position.X,input.Position.Y)
+            -- Luu AbsoluteSize va AbsolutePosition tai thoi diem bat dau resize
+            rStartSize=Vector2.new(PhoneFrame.AbsoluteSize.X,PhoneFrame.AbsoluteSize.Y)
+            rStartPos=Vector2.new(PhoneFrame.AbsolutePosition.X,PhoneFrame.AbsolutePosition.Y)
         end
     end)
 end
 
 UIS.InputChanged:Connect(function(input)
     if not activeResizer then return end
-    if input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch then
-        local delta = Vector2.new(input.Position.X, input.Position.Y) - rStartMouse
-        local nW, nH = rStartSize.X, rStartSize.Y
-        local nX, nY = rStartPos.X,  rStartPos.Y
-        if activeResizer:find("E")  then nW = rStartSize.X + delta.X end
-        if activeResizer:find("S")  then nH = rStartSize.Y + delta.Y end
-        if activeResizer:find("W")  then nW = rStartSize.X - delta.X nX = rStartPos.X + delta.X end
-        if activeResizer:find("N")  then nH = rStartSize.Y - delta.Y nY = rStartPos.Y + delta.Y end
-        nW = math.max(50, nW) nH = math.max(50, nH)
-        PhoneFrame.Size     = UDim2.new(0, nW, 0, nH)
-        -- FIX: chi cap nhat Position khi resize tu canh/goc co anh huong Position (W, N)
-        -- khong di chuyen neu chi resize E hoac S
-        if activeResizer:find("W") or activeResizer:find("N") then
-            PhoneFrame.Position = UDim2.new(0, nX, 0, nY)
+    if input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch then
+        local delta=Vector2.new(input.Position.X,input.Position.Y)-rStartMouse
+        local nW=rStartSize.X
+        local nH=rStartSize.Y
+        local nX=rStartPos.X
+        local nY=rStartPos.Y
+
+        -- Tinh toan dung: chi thay doi size va pos theo huong keo
+        if activeResizer=="E"  or activeResizer=="NE" or activeResizer=="SE" then nW=rStartSize.X+delta.X end
+        if activeResizer=="W"  or activeResizer=="NW" or activeResizer=="SW" then
+            nW=rStartSize.X-delta.X nX=rStartPos.X+delta.X
         end
-        TargetSizeX = nW TargetSizeY = nH
+        if activeResizer=="S"  or activeResizer=="SE" or activeResizer=="SW" then nH=rStartSize.Y+delta.Y end
+        if activeResizer=="N"  or activeResizer=="NW" or activeResizer=="NE" then
+            nH=rStartSize.Y-delta.Y nY=rStartPos.Y+delta.Y
+        end
+
+        nW=math.max(50,nW) nH=math.max(50,nH)
+
+        -- Cap nhat Size luon
+        PhoneFrame.Size=UDim2.new(0,nW,0,nH)
+
+        -- Chi cap nhat Position khi can (W hoac N direction)
+        if activeResizer=="W" or activeResizer=="NW" or activeResizer=="SW" or
+           activeResizer=="N" or activeResizer=="NE" then
+            PhoneFrame.Position=UDim2.new(0,nX,0,nY)
+        end
+
+        TargetSizeX=nW TargetSizeY=nH
     end
 end)
 
 UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-        -- FIX: khoa lai vi tri sau khi tha tay, khong co them code gi ca
-        -- vi tri da duoc set trong InputChanged, no se giu nguyen sau khi InputEnded
-        activeResizer = nil
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+        activeResizer=nil
     end
 end)
 
 -- ============================================================
--- // PHONE SCREEN CORE — REALTIME SCREENGUI MIRROR
+-- // PHONE MIRROR CORE
 -- ============================================================
-local syncConn          = nil
-local currentSurfaceGui = nil
-local cloneMap          = {} -- {original = clone}
+local syncConn=nil
+local currentSurfaceGui=nil
+local cloneMap={}
 
 local function ClearMirror()
-    for _, clone in pairs(cloneMap) do
-        pcall(function() clone:Destroy() end)
-    end
-    cloneMap = {}
+    for _,clone in pairs(cloneMap) do pcall(function() clone:Destroy() end) end
+    cloneMap={}
 end
 
-local function DeepClone(instance)
-    local ok, clone = pcall(function() return instance:Clone() end)
+local function DeepClone(inst)
+    local ok,clone=pcall(function() return inst:Clone() end)
     if not ok or not clone then return nil end
-    -- Xoa LocalScript de tranh loi
-    for _, d in ipairs(clone:GetDescendants()) do
+    for _,d in ipairs(clone:GetDescendants()) do
         if d:IsA("LuaSourceContainer") then pcall(function() d:Destroy() end) end
     end
     return clone
 end
 
-local function SyncProperties(orig, clone)
+local function SyncProperties(orig,clone)
     if not orig or not orig.Parent or not clone or not clone.Parent then return end
     pcall(function()
         if orig:IsA("GuiObject") then
-            clone.Visible             = orig.Visible
-            clone.Position            = orig.Position
-            clone.Size                = orig.Size
-            clone.BackgroundColor3    = orig.BackgroundColor3
-            clone.BackgroundTransparency = orig.BackgroundTransparency
-            clone.AnchorPoint         = orig.AnchorPoint
-            clone.ZIndex              = orig.ZIndex
-            clone.Rotation            = orig.Rotation
+            clone.Visible=orig.Visible clone.Position=orig.Position clone.Size=orig.Size
+            clone.BackgroundColor3=orig.BackgroundColor3 clone.BackgroundTransparency=orig.BackgroundTransparency
+            clone.AnchorPoint=orig.AnchorPoint clone.ZIndex=orig.ZIndex clone.Rotation=orig.Rotation
         end
         if orig:IsA("TextLabel") or orig:IsA("TextButton") or orig:IsA("TextBox") then
-            clone.Text                    = orig.Text
-            clone.TextColor3              = orig.TextColor3
-            clone.TextTransparency        = orig.TextTransparency
-            clone.TextStrokeColor3        = orig.TextStrokeColor3
-            clone.TextStrokeTransparency  = orig.TextStrokeTransparency
-            clone.TextSize                = orig.TextSize
-            clone.Font                    = orig.Font
+            clone.Text=orig.Text clone.TextColor3=orig.TextColor3 clone.TextTransparency=orig.TextTransparency
+            clone.TextStrokeColor3=orig.TextStrokeColor3 clone.TextStrokeTransparency=orig.TextStrokeTransparency
+            clone.TextSize=orig.TextSize clone.Font=orig.Font
         end
         if orig:IsA("ImageLabel") or orig:IsA("ImageButton") then
-            clone.Image               = orig.Image
-            clone.ImageColor3         = orig.ImageColor3
-            clone.ImageTransparency   = orig.ImageTransparency
-            clone.ImageRectOffset     = orig.ImageRectOffset
-            clone.ImageRectSize       = orig.ImageRectSize
+            clone.Image=orig.Image clone.ImageColor3=orig.ImageColor3 clone.ImageTransparency=orig.ImageTransparency
+            clone.ImageRectOffset=orig.ImageRectOffset clone.ImageRectSize=orig.ImageRectSize
         end
-        if orig:IsA("ScrollingFrame") then
-            clone.CanvasPosition = orig.CanvasPosition
-            clone.CanvasSize     = orig.CanvasSize
-        end
-        if orig:IsA("Frame") then
-            clone.BackgroundColor3       = orig.BackgroundColor3
-            clone.BackgroundTransparency = orig.BackgroundTransparency
-        end
+        if orig:IsA("ScrollingFrame") then clone.CanvasPosition=orig.CanvasPosition clone.CanvasSize=orig.CanvasSize end
     end)
 end
 
 local function BuildMirror(surfaceGui)
-    ClearMirror()
-    UpdatePhoneScale(surfaceGui)
-
-    for _, child in ipairs(surfaceGui:GetChildren()) do
+    ClearMirror() UpdatePhoneScale(surfaceGui)
+    for _,child in ipairs(surfaceGui:GetChildren()) do
         if not child:IsA("LuaSourceContainer") then
-            local clone = DeepClone(child)
+            local clone=DeepClone(child)
             if clone then
-                clone.Parent = ContentContainer
-                cloneMap[child] = clone
-                -- Map descendants
-                local origDescs  = child:GetDescendants()
-                local cloneDescs = clone:GetDescendants()
-                for i, od in ipairs(origDescs) do
-                    if cloneDescs[i] then
-                        cloneMap[od] = cloneDescs[i]
-                    end
-                end
+                clone.Parent=ContentContainer cloneMap[child]=clone
+                local od=child:GetDescendants() local cd=clone:GetDescendants()
+                for i,o in ipairs(od) do if cd[i] then cloneMap[o]=cd[i] end end
             end
         end
     end
 end
 
 local function StartMirrorSync(surfaceGui)
-    if syncConn then syncConn:Disconnect() syncConn = nil end
-
+    if syncConn then syncConn:Disconnect() syncConn=nil end
     BuildMirror(surfaceGui)
-
-    syncConn = RunService.Heartbeat:Connect(function()
+    syncConn=RunService.Heartbeat:Connect(function()
         if not PhoneFrame.Visible or not surfaceGui or not surfaceGui.Parent then
-            if syncConn then syncConn:Disconnect() syncConn = nil end
-            return
+            if syncConn then syncConn:Disconnect() syncConn=nil end return
         end
-
         UpdatePhoneScale(surfaceGui)
-
-        -- Sync properties tung cap moi frame
-        for orig, clone in pairs(cloneMap) do
+        for orig,clone in pairs(cloneMap) do
             if not orig.Parent or not clone.Parent then
-                -- Xoa cap bi mat
-                pcall(function() clone:Destroy() end)
-                cloneMap[orig] = nil
-            else
-                SyncProperties(orig, clone)
-            end
+                pcall(function() clone:Destroy() end) cloneMap[orig]=nil
+            else SyncProperties(orig,clone) end
         end
-
-        -- Them clone cho instance moi xuat hien
-        for _, child in ipairs(surfaceGui:GetDescendants()) do
+        for _,child in ipairs(surfaceGui:GetDescendants()) do
             if not child:IsA("LuaSourceContainer") and not cloneMap[child] then
-                -- Tim parent clone
-                local parentClone = cloneMap[child.Parent]
-                if parentClone then
-                    local clone = DeepClone(child)
-                    if clone then
-                        clone.Parent = parentClone
-                        cloneMap[child] = clone
-                    end
+                local pc=cloneMap[child.Parent]
+                if pc then
+                    local clone=DeepClone(child)
+                    if clone then clone.Parent=pc cloneMap[child]=clone end
                 end
             end
         end
@@ -647,137 +606,256 @@ end
 
 local function ShowPhoneScreen(tool)
     if not PhoneScreenEnabled then return end
-    local surfaceGui = tool:FindFirstChildWhichIsA("SurfaceGui", true)
-    if not surfaceGui then
-        Rayfield:Notify({ Title="Phone", Content="Khong tim thay SurfaceGui trong Phone1", Duration=3 })
-        return
-    end
-    currentSurfaceGui  = surfaceGui
-    PhoneFrame.Visible = true
-    StartMirrorSync(surfaceGui)
+    local sg=tool:FindFirstChildWhichIsA("SurfaceGui",true)
+    if not sg then Rayfield:Notify({Title="Phone",Content="SurfaceGui not found in Phone1",Duration=3}) return end
+    currentSurfaceGui=sg PhoneFrame.Visible=true StartMirrorSync(sg)
 end
 
 local function HidePhoneScreen()
-    PhoneFrame.Visible = false
-    if syncConn then syncConn:Disconnect() syncConn = nil end
-    ClearMirror()
-    currentSurfaceGui = nil
+    PhoneFrame.Visible=false
+    if syncConn then syncConn:Disconnect() syncConn=nil end
+    ClearMirror() currentSurfaceGui=nil
 end
 
 local function CheckAndShowPhone()
-    local char = LocalPlayer.Character
-    if not char then return end
-    local phone = char:FindFirstChild("Phone1")
+    local char=LocalPlayer.Character if not char then return end
+    local phone=char:FindFirstChild("Phone1")
     if phone then task.wait(0.2) ShowPhoneScreen(phone) end
 end
 
 local function HookPhoneEvents(char)
     char.ChildAdded:Connect(function(child)
-        if child.Name == "Phone1" then
-            task.wait(0.2)
-            if PhoneScreenEnabled then ShowPhoneScreen(child) end
-        end
+        if child.Name=="Phone1" then task.wait(0.2) if PhoneScreenEnabled then ShowPhoneScreen(child) end end
     end)
     char.ChildRemoved:Connect(function(child)
-        if child.Name == "Phone1" then HidePhoneScreen() end
+        if child.Name=="Phone1" then HidePhoneScreen() end
     end)
 end
 
 if LocalPlayer.Character then HookPhoneEvents(LocalPlayer.Character) end
-LocalPlayer.CharacterAdded:Connect(function(char)
-    HidePhoneScreen()
-    HookPhoneEvents(char)
+LocalPlayer.CharacterAdded:Connect(function(char) HidePhoneScreen() HookPhoneEvents(char) end)
+
+-- ============================================================
+-- // RADAR
+-- ============================================================
+local RadarEnabled    = false
+local radarConn       = nil
+local RADAR_RADIUS    = 80  -- studs represented in radar
+local RADAR_SIZE      = 110 -- px
+
+local RadarGui = Instance.new("ScreenGui")
+RadarGui.Name="CoconutRadar" RadarGui.ResetOnSpawn=false
+RadarGui.IgnoreGuiInset=true RadarGui.DisplayOrder=8 RadarGui.Parent=CoreGui
+
+-- Radar frame
+local RadarFrame=Instance.new("Frame")
+RadarFrame.Size=UDim2.new(0,RADAR_SIZE,0,RADAR_SIZE)
+RadarFrame.Position=UDim2.new(0,10,1,-RADAR_SIZE-60)
+RadarFrame.BackgroundColor3=Color3.fromRGB(10,10,20)
+RadarFrame.BackgroundTransparency=0.2 RadarFrame.BorderSizePixel=0
+RadarFrame.Visible=false RadarFrame.ZIndex=10 RadarFrame.Parent=RadarGui
+Instance.new("UICorner",RadarFrame).CornerRadius=UDim.new(1,0)
+local RadarStroke=Instance.new("UIStroke") RadarStroke.Color=Color3.fromRGB(60,60,120) RadarStroke.Thickness=1.5 RadarStroke.Parent=RadarFrame
+
+-- Crosshair lines
+local function MakeLine(isH)
+    local l=Instance.new("Frame")
+    l.BackgroundColor3=Color3.fromRGB(40,40,80) l.BorderSizePixel=0 l.ZIndex=11 l.Parent=RadarFrame
+    if isH then l.Size=UDim2.new(1,0,0,1) l.Position=UDim2.new(0,0,0.5,0)
+    else l.Size=UDim2.new(0,1,1,0) l.Position=UDim2.new(0.5,0,0,0) end
+end
+MakeLine(true) MakeLine(false)
+
+-- Center dot (player)
+local CenterDot=Instance.new("Frame")
+CenterDot.Size=UDim2.new(0,6,0,6) CenterDot.AnchorPoint=Vector2.new(0.5,0.5)
+CenterDot.Position=UDim2.new(0.5,0,0.5,0) CenterDot.BackgroundColor3=Color3.fromRGB(100,200,255)
+CenterDot.BorderSizePixel=0 CenterDot.ZIndex=13 CenterDot.Parent=RadarFrame
+Instance.new("UICorner",CenterDot).CornerRadius=UDim.new(1,0)
+
+-- Teacher dot on radar
+local TeacherDot=Instance.new("Frame")
+TeacherDot.Size=UDim2.new(0,8,0,8) TeacherDot.AnchorPoint=Vector2.new(0.5,0.5)
+TeacherDot.Position=UDim2.new(0.5,0,0.5,0) TeacherDot.BackgroundColor3=Color3.fromRGB(255,60,60)
+TeacherDot.BorderSizePixel=0 TeacherDot.ZIndex=13 TeacherDot.Visible=false TeacherDot.Parent=RadarFrame
+Instance.new("UICorner",TeacherDot).CornerRadius=UDim.new(1,0)
+
+-- Warning label next to radar
+local WarningLabel=Instance.new("TextLabel")
+WarningLabel.Size=UDim2.new(0,140,0,36)
+WarningLabel.Position=UDim2.new(0,RADAR_SIZE+6,1,-RADAR_SIZE-60+RADAR_SIZE/2-18)
+WarningLabel.BackgroundColor3=Color3.fromRGB(10,10,20) WarningLabel.BackgroundTransparency=0.2
+WarningLabel.Text="SAFE" WarningLabel.TextColor3=Color3.fromRGB(60,220,60)
+WarningLabel.Font=Enum.Font.GothamBold WarningLabel.TextSize=13
+WarningLabel.BorderSizePixel=0 WarningLabel.ZIndex=10 WarningLabel.Visible=false
+WarningLabel.Parent=RadarGui
+Instance.new("UICorner",WarningLabel).CornerRadius=UDim.new(0,6)
+local WStroke=Instance.new("UIStroke") WStroke.Color=Color3.fromRGB(60,220,60) WStroke.Thickness=1.5 WStroke.Parent=WarningLabel
+
+-- Radar drag
+local rDragging,rStart,rPos=false,nil,nil
+RadarFrame.InputBegan:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+        rDragging=true rStart=Vector2.new(input.Position.X,input.Position.Y) rPos=RadarFrame.Position
+    end
 end)
+UIS.InputChanged:Connect(function(input)
+    if rDragging and (input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch) then
+        local d=Vector2.new(input.Position.X,input.Position.Y)-rStart
+        local newPos=UDim2.new(rPos.X.Scale,rPos.X.Offset+d.X,rPos.Y.Scale,rPos.Y.Offset+d.Y)
+        RadarFrame.Position=newPos
+        -- Keep warning label next to radar
+        WarningLabel.Position=UDim2.new(rPos.X.Scale,rPos.X.Offset+d.X+RADAR_SIZE+6,rPos.Y.Scale,rPos.Y.Offset+d.Y+RADAR_SIZE/2-18)
+    end
+end)
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then rDragging=false end
+end)
+
+local function StartRadar()
+    RadarFrame.Visible   = true
+    WarningLabel.Visible = true
+
+    radarConn = RunService.Heartbeat:Connect(function()
+        if not RadarEnabled then return end
+
+        local char = LocalPlayer.Character
+        local localRoot = char and char:FindFirstChild("HumanoidRootPart")
+        if not localRoot then return end
+
+        local teacher = workspace:FindFirstChild("Teacher")
+        local tRoot   = teacher and (teacher:FindFirstChild("HumanoidRootPart") or teacher:FindFirstChildWhichIsA("BasePart"))
+
+        if not tRoot then
+            TeacherDot.Visible = false
+            WarningLabel.Text  = "? No Teacher"
+            WarningLabel.TextColor3 = Color3.fromRGB(150,150,150)
+            WStroke.Color           = Color3.fromRGB(150,150,150)
+            return
+        end
+
+        local diff = tRoot.Position - localRoot.Position
+        local dist = diff.Magnitude
+
+        -- Radar dot position
+        -- Project onto XZ plane relative to player facing
+        local cf       = localRoot.CFrame
+        local localDiff = cf:PointToObjectSpace(tRoot.Position)
+        local rx        = math.clamp(localDiff.X / RADAR_RADIUS, -1, 1)
+        local rz        = math.clamp(localDiff.Z / RADAR_RADIUS, -1, 1)
+
+        TeacherDot.Visible  = true
+        TeacherDot.Position = UDim2.new(0.5 + rx*0.45, 0, 0.5 + rz*0.45, 0)
+
+        -- Warning level
+        if dist > 45 then
+            WarningLabel.Text       = "SAFE  >"..math.floor(dist).."st"
+            WarningLabel.TextColor3 = Color3.fromRGB(60,220,60)
+            TeacherDot.BackgroundColor3 = Color3.fromRGB(60,220,60)
+            WStroke.Color = Color3.fromRGB(60,220,60)
+        elseif dist > 18 then
+            WarningLabel.Text       = "CAUTION  "..math.floor(dist).."st"
+            WarningLabel.TextColor3 = Color3.fromRGB(255,200,0)
+            TeacherDot.BackgroundColor3 = Color3.fromRGB(255,200,0)
+            WStroke.Color = Color3.fromRGB(255,200,0)
+        else
+            WarningLabel.Text       = "DANGER!  "..math.floor(dist).."st"
+            WarningLabel.TextColor3 = Color3.fromRGB(255,50,50)
+            TeacherDot.BackgroundColor3 = Color3.fromRGB(255,50,50)
+            WStroke.Color = Color3.fromRGB(255,50,50)
+        end
+    end)
+end
+
+local function StopRadar()
+    if radarConn then radarConn:Disconnect() radarConn=nil end
+    RadarFrame.Visible   = false
+    WarningLabel.Visible = false
+end
 
 -- ============================================================
 -- // RAYFIELD TABS
 -- ============================================================
+
+-- GAME TAB
 local GameTab = Window:CreateTab("Game", "gamepad")
 
 GameTab:CreateToggle({
     Name="Show Phone Screen", CurrentValue=false, Flag="ShowPhoneScreen",
-    Callback=function(val)
-        PhoneScreenEnabled = val
-        if val then CheckAndShowPhone() else HidePhoneScreen() end
-    end,
+    Callback=function(val) PhoneScreenEnabled=val if val then CheckAndShowPhone() else HidePhoneScreen() end end,
 })
-
 GameTab:CreateToggle({
     Name="Drag Mode", CurrentValue=false, Flag="PhoneDragMode",
-    Callback=function(val)
-        PhoneDragEnabled   = val
-        DragBar.Visible    = val
-    end,
+    Callback=function(val) PhoneDragEnabled=val DragBar.Visible=val end,
 })
-
 GameTab:CreateToggle({
     Name="Resize Mode", CurrentValue=false, Flag="PhoneResizeMode",
-    Callback=function(val)
-        PhoneResizeEnabled = val
-        for _, h in ipairs(resizeHandles) do h.Visible = val end
-    end,
+    Callback=function(val) PhoneResizeEnabled=val for _,h in ipairs(resizeHandles) do h.Visible=val end end,
 })
-
 GameTab:CreateInput({
-    Name="Size (Width, Height)", PlaceholderText="VD: 200, 400",
+    Name="Size (Width, Height)", PlaceholderText="e.g: 200, 400",
     RemoveTextAfterFocusLost=false,
     Callback=function(text)
-        local x, y = text:match("(%d+)[^%d]+(%d+)")
+        local x,y=text:match("(%d+)[^%d]+(%d+)")
         if x and y then
-            TargetSizeX = tonumber(x) TargetSizeY = tonumber(y)
-            PhoneFrame.Size = UDim2.new(0, TargetSizeX, 0, TargetSizeY)
+            TargetSizeX=tonumber(x) TargetSizeY=tonumber(y)
+            PhoneFrame.Size=UDim2.new(0,TargetSizeX,0,TargetSizeY)
             if currentSurfaceGui then UpdatePhoneScale(currentSurfaceGui) end
-        else
-            Rayfield:Notify({ Title="Loi", Content="Nhap dang: 200, 400", Duration=3 })
-        end
+        else Rayfield:Notify({Title="Error",Content="Enter as: 200, 400",Duration=3}) end
     end,
 })
 
 GameTab:CreateDivider()
 
 GameTab:CreateToggle({
-    Name="Teacher ESP", CurrentValue=false, Flag="TeacherESP",
-    Callback=function(val)
-        TeacherESPEnabled = val
-        if val then StartTeacherESP() else StopTeacherESP() end
-    end,
+    Name="Teacher Radar", CurrentValue=false, Flag="TeacherRadar",
+    Callback=function(val) RadarEnabled=val if val then StartRadar() else StopRadar() end end,
 })
 
-GameTab:CreateColorPicker({
+-- VISUAL TAB
+local VisualTab = Window:CreateTab("Visual", "eye")
+
+VisualTab:CreateToggle({
+    Name="Teacher ESP", CurrentValue=false, Flag="TeacherESP",
+    Callback=function(val) TeacherESPEnabled=val if val then StartTeacherESP() else StopTeacherESP() end end,
+})
+VisualTab:CreateColorPicker({
     Name="Teacher ESP Color", Color=ESPConfig.TeacherColor, Flag="TeacherColor",
     Callback=function(val) ESPConfig.TeacherColor=val UpdateESPColors("Teacher",val) end,
 })
-
-GameTab:CreateDivider()
-
-GameTab:CreateToggle({
+VisualTab:CreateDivider()
+VisualTab:CreateToggle({
     Name="Player ESP", CurrentValue=false, Flag="PlayerESP",
-    Callback=function(val)
-        PlayerESPEnabled = val
-        if val then StartPlayerESP() else StopPlayerESP() end
-    end,
+    Callback=function(val) PlayerESPEnabled=val if val then StartPlayerESP() else StopPlayerESP() end end,
 })
-
-GameTab:CreateColorPicker({
+VisualTab:CreateColorPicker({
     Name="Player ESP Color", Color=ESPConfig.PlayerColor, Flag="PlayerColor",
     Callback=function(val) ESPConfig.PlayerColor=val UpdateESPColors("Player",val) end,
 })
+VisualTab:CreateDivider()
+VisualTab:CreateToggle({
+    Name="Fullbright", CurrentValue=false, Flag="Fullbright",
+    Callback=function(val) FullbrightEnabled=val if val then StartFullbright() else StopFullbright() end end,
+})
 
+-- PLAYER TAB
 local PlayerTab = Window:CreateTab("Player", "user")
 
 PlayerTab:CreateToggle({
     Name="Third Person", CurrentValue=false, Flag="ThirdPerson",
-    Callback=function(val)
-        ThirdPersonEnabled = val
-        if val then StartThirdPerson() else StopThirdPerson() end
-    end,
+    Callback=function(val) ThirdPersonEnabled=val if val then StartThirdPerson() else StopThirdPerson() end end,
 })
-
 PlayerTab:CreateToggle({
     Name="Show Button In Screen (Third Person)", CurrentValue=false, Flag="ShowTPBtn",
-    Callback=function(val)
-        if val then CreateQuickToggleBtn() else DestroyQuickBtn() end
-    end,
+    Callback=function(val) if val then CreateQuickToggleBtn() else DestroyQuickBtn() end end,
+})
+
+-- SETTINGS TAB
+local SettingTab = Window:CreateTab("Settings", "settings")
+
+SettingTab:CreateButton({
+    Name="Fix Lag",
+    Callback=function() FixLag() end,
 })
 
 Rayfield:Notify({ Title="Coconut Hub", Content="Loaded successfully!", Duration=3 })
