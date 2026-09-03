@@ -391,17 +391,16 @@ end
 local PhoneScreenEnabled = false
 local PhoneDragEnabled   = false
 local PhoneResizeEnabled = false
-local TargetSizeX        = 150
-local TargetSizeY        = 300
+local TargetSizeX        = 50
+local TargetSizeY        = 100
 
 local PhoneScreenGui = Instance.new("ScreenGui")
 PhoneScreenGui.Name="CoconutPhoneScreen" PhoneScreenGui.ResetOnSpawn=false
 PhoneScreenGui.DisplayOrder=5 PhoneScreenGui.IgnoreGuiInset=true PhoneScreenGui.Parent=CoreGui
 
 local PhoneFrame = Instance.new("Frame")
--- Sửa AnchorPoint (0,0) làm chuẩn mực tuyệt đối để Resize ko làm lệch Position
-PhoneFrame.AnchorPoint=Vector2.new(0,0) 
-PhoneFrame.Position=UDim2.new(1, -TargetSizeX - 10, 0, 60)
+PhoneFrame.AnchorPoint=Vector2.new(1,0) 
+PhoneFrame.Position=UDim2.new(1,-10,0,60)
 PhoneFrame.Size=UDim2.new(0,TargetSizeX,0,TargetSizeY) PhoneFrame.BackgroundColor3=Color3.fromRGB(0,0,0)
 PhoneFrame.BorderSizePixel=0 PhoneFrame.ClipsDescendants=true PhoneFrame.Visible=false PhoneFrame.Parent=PhoneScreenGui
 Instance.new("UICorner",PhoneFrame).CornerRadius=UDim.new(0,6)
@@ -439,8 +438,7 @@ UIS.InputEnded:Connect(function(input)
 end)
 
 -- ============================================================
--- // RESIZE (FIXED) 
--- Bounding Box logic: Chỉ co giãn, không làm trượt vị trí menu
+-- // RESIZE
 -- ============================================================
 local activeResizer, rStartMouse = nil, nil
 local rStartAbsPos, rStartAbsSize = nil, nil
@@ -480,7 +478,6 @@ for _, def in ipairs(handleDefs) do
         if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
             activeResizer=def.Action
             rStartMouse=Vector2.new(input.Position.X,input.Position.Y)
-            -- Lưu vị trí tuyệt đối của Bounding Box
             rStartAbsPos = PhoneFrame.AbsolutePosition
             rStartAbsSize = PhoneFrame.AbsoluteSize
         end
@@ -505,7 +502,6 @@ UIS.InputChanged:Connect(function(input)
         local newWidth = math.max(50, right - left)
         local newHeight = math.max(50, bottom - top)
 
-        -- Giữ nguyên cạnh đối diện khi đạt giới hạn Min Size (50px)
         if activeResizer:match("W") then left = right - newWidth end
         if activeResizer:match("N") then top = bottom - newHeight end
 
@@ -755,15 +751,15 @@ local function StartRadar()
         -- 3. Khoảng cách (Cập nhật 1-15 Đỏ, 16-20 Vàng, >20 Xanh)
         if dist > 20 then
             WarningLabel.Text       = "SAFE  "..math.floor(dist).."st"
-            WarningLabel.TextColor3 = Color3.fromRGB(100, 255, 100) -- Xanh dịu
+            WarningLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
             TeacherDot.BackgroundColor3 = Color3.fromRGB(60, 220, 60)
         elseif dist >= 16 then
             WarningLabel.Text       = "CAUTION  "..math.floor(dist).."st"
-            WarningLabel.TextColor3 = Color3.fromRGB(255, 215, 0) -- Vàng dịu
+            WarningLabel.TextColor3 = Color3.fromRGB(255, 215, 0)
             TeacherDot.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
         else
             WarningLabel.Text       = "DANGER!  "..math.floor(dist).."st"
-            WarningLabel.TextColor3 = Color3.fromRGB(255, 100, 100) -- Đỏ dịu
+            WarningLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
             TeacherDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
         end
     end)
@@ -797,10 +793,9 @@ GameTab:CreateToggle({
 GameTab:CreateButton({
     Name="Reset Phone Menu",
     Callback=function()
-        TargetSizeX=150 TargetSizeY=300
+        TargetSizeX=50 TargetSizeY=100
         PhoneFrame.Size=UDim2.new(0,TargetSizeX,0,TargetSizeY)
-        -- Đặt lại đúng vị trí góc phải bên trên mặc định
-        PhoneFrame.Position=UDim2.new(1,-TargetSizeX-10,0,60)
+        PhoneFrame.Position=UDim2.new(1,-10,0,60)
         if currentSurfaceGui then UpdatePhoneScale(currentSurfaceGui) end
         Rayfield:Notify({Title="Phone Screen",Content="Đã reset vị trí và kích thước!",Duration=2})
     end,
