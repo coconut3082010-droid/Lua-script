@@ -386,20 +386,22 @@ local function CreateQuickToggleBtn()
 end
 
 -- ============================================================
--- // PHONE SCREEN
+-- // PHONE SCREEN 
 -- ============================================================
 local PhoneScreenEnabled = false
 local PhoneDragEnabled   = false
 local PhoneResizeEnabled = false
-local TargetSizeX        = 50
-local TargetSizeY        = 100
+local TargetSizeX        = 150
+local TargetSizeY        = 300
 
 local PhoneScreenGui = Instance.new("ScreenGui")
 PhoneScreenGui.Name="CoconutPhoneScreen" PhoneScreenGui.ResetOnSpawn=false
 PhoneScreenGui.DisplayOrder=5 PhoneScreenGui.IgnoreGuiInset=true PhoneScreenGui.Parent=CoreGui
 
 local PhoneFrame = Instance.new("Frame")
-PhoneFrame.AnchorPoint=Vector2.new(1,0) PhoneFrame.Position=UDim2.new(1,-10,0,60)
+-- Sửa AnchorPoint (0,0) làm chuẩn mực tuyệt đối để Resize ko làm lệch Position
+PhoneFrame.AnchorPoint=Vector2.new(0,0) 
+PhoneFrame.Position=UDim2.new(1, -TargetSizeX - 10, 0, 60)
 PhoneFrame.Size=UDim2.new(0,TargetSizeX,0,TargetSizeY) PhoneFrame.BackgroundColor3=Color3.fromRGB(0,0,0)
 PhoneFrame.BorderSizePixel=0 PhoneFrame.ClipsDescendants=true PhoneFrame.Visible=false PhoneFrame.Parent=PhoneScreenGui
 Instance.new("UICorner",PhoneFrame).CornerRadius=UDim.new(0,6)
@@ -437,9 +439,11 @@ UIS.InputEnded:Connect(function(input)
 end)
 
 -- ============================================================
--- // RESIZE — FIX: dung AbsolutePosition luu truoc, khong cap nhat Position khi resize E/S
+-- // RESIZE (FIXED) 
+-- Bounding Box logic: Chỉ co giãn, không làm trượt vị trí menu
 -- ============================================================
-local activeResizer,rStartMouse,rStartSize,rStartPos=nil,nil,nil,nil
+local activeResizer, rStartMouse = nil, nil
+local rStartAbsPos, rStartAbsSize = nil, nil
 local resizeHandles={}
 
 local handleDefs={
@@ -476,9 +480,9 @@ for _, def in ipairs(handleDefs) do
         if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
             activeResizer=def.Action
             rStartMouse=Vector2.new(input.Position.X,input.Position.Y)
-            -- Luu AbsoluteSize va AbsolutePosition tai thoi diem bat dau resize
-            rStartSize=Vector2.new(PhoneFrame.AbsoluteSize.X,PhoneFrame.AbsoluteSize.Y)
-            rStartPos=Vector2.new(PhoneFrame.AbsolutePosition.X,PhoneFrame.AbsolutePosition.Y)
+            -- Lưu vị trí tuyệt đối của Bounding Box
+            rStartAbsPos = PhoneFrame.AbsolutePosition
+            rStartAbsSize = PhoneFrame.AbsoluteSize
         end
     end)
 end
@@ -486,34 +490,30 @@ end
 UIS.InputChanged:Connect(function(input)
     if not activeResizer then return end
     if input.UserInputType==Enum.UserInputType.MouseMovement or input.UserInputType==Enum.UserInputType.Touch then
-        local delta=Vector2.new(input.Position.X,input.Position.Y)-rStartMouse
-        local nW=rStartSize.X
-        local nH=rStartSize.Y
-        local nX=rStartPos.X
-        local nY=rStartPos.Y
+        local delta = Vector2.new(input.Position.X,input.Position.Y) - rStartMouse
+        
+        local left = rStartAbsPos.X
+        local top = rStartAbsPos.Y
+        local right = rStartAbsPos.X + rStartAbsSize.X
+        local bottom = rStartAbsPos.Y + rStartAbsSize.Y
 
-        -- Tinh toan dung: chi thay doi size va pos theo huong keo
-        if activeResizer=="E"  or activeResizer=="NE" or activeResizer=="SE" then nW=rStartSize.X+delta.X end
-        if activeResizer=="W"  or activeResizer=="NW" or activeResizer=="SW" then
-            nW=rStartSize.X-delta.X nX=rStartPos.X+delta.X
-        end
-        if activeResizer=="S"  or activeResizer=="SE" or activeResizer=="SW" then nH=rStartSize.Y+delta.Y end
-        if activeResizer=="N"  or activeResizer=="NW" or activeResizer=="NE" then
-            nH=rStartSize.Y-delta.Y nY=rStartPos.Y+delta.Y
-        end
+        if activeResizer:match("W") then left = left + delta.X end
+        if activeResizer:match("E") then right = right + delta.X end
+        if activeResizer:match("N") then top = top + delta.Y end
+        if activeResizer:match("S") then bottom = bottom + delta.Y end
 
-        nW=math.max(50,nW) nH=math.max(50,nH)
+        local newWidth = math.max(50, right - left)
+        local newHeight = math.max(50, bottom - top)
 
-        -- Cap nhat Size luon
-        PhoneFrame.Size=UDim2.new(0,nW,0,nH)
+        -- Giữ nguyên cạnh đối diện khi đạt giới hạn Min Size (50px)
+        if activeResizer:match("W") then left = right - newWidth end
+        if activeResizer:match("N") then top = bottom - newHeight end
 
-        -- Chi cap nhat Position khi can (W hoac N direction)
-        if activeResizer=="W" or activeResizer=="NW" or activeResizer=="SW" or
-           activeResizer=="N" or activeResizer=="NE" then
-            PhoneFrame.Position=UDim2.new(0,nX,0,nY)
-        end
-
-        TargetSizeX=nW TargetSizeY=nH
+        PhoneFrame.Size = UDim2.new(0, newWidth, 0, newHeight)
+        PhoneFrame.Position = UDim2.new(0, left, 0, top)
+        
+        TargetSizeX = newWidth 
+        TargetSizeY = newHeight
     end
 end)
 
@@ -671,7 +671,7 @@ local CenterDot=Instance.new("TextLabel")
 CenterDot.Size=UDim2.new(0,16,0,16) CenterDot.AnchorPoint=Vector2.new(0.5,0.5)
 CenterDot.Position=UDim2.new(0.5,0,0.5,0) 
 CenterDot.BackgroundTransparency=1
-CenterDot.Text="▲" -- Biểu tượng mũi tên
+CenterDot.Text="▲"
 CenterDot.TextColor3=Color3.fromRGB(100,200,255)
 CenterDot.Font=Enum.Font.GothamBold CenterDot.TextSize=14
 CenterDot.BorderSizePixel=0 CenterDot.ZIndex=14 CenterDot.Parent=RadarFrame
@@ -683,7 +683,7 @@ TeacherDot.Position=UDim2.new(0.5,0,0.5,0) TeacherDot.BackgroundColor3=Color3.fr
 TeacherDot.BorderSizePixel=0 TeacherDot.ZIndex=13 TeacherDot.Visible=false TeacherDot.Parent=RadarFrame
 Instance.new("UICorner",TeacherDot).CornerRadius=UDim.new(1,0)
 
--- Warning label next to radar (Đã sửa cho đỡ chói mắt)
+-- Warning label next to radar
 local WarningLabel=Instance.new("TextLabel")
 WarningLabel.Size=UDim2.new(0,140,0,36)
 WarningLabel.Position=UDim2.new(0,RADAR_SIZE+6,1,-RADAR_SIZE-60+RADAR_SIZE/2-18)
@@ -693,7 +693,6 @@ WarningLabel.Font=Enum.Font.GothamBold WarningLabel.TextSize=14
 WarningLabel.BorderSizePixel=0 WarningLabel.ZIndex=10 WarningLabel.Visible=false
 WarningLabel.Parent=RadarGui
 Instance.new("UICorner",WarningLabel).CornerRadius=UDim.new(0,6)
--- Viền chữ màu đen giúp dễ đọc hơn, không bị lóe
 local WStroke=Instance.new("UIStroke") WStroke.Color=Color3.fromRGB(0,0,0) WStroke.Thickness=1.2 WStroke.Parent=WarningLabel
 
 -- Radar drag
@@ -742,25 +741,23 @@ local function StartRadar()
         local diff = tPos - pPos
         local dist = diff.Magnitude
 
-        -- 1. Xoay Mũi Tên Player
-        -- Lấy góc quay Y của nhân vật và chuyển đổi sang dạng xoay của UI
+        -- 1. Xoay Mũi Tên Player chính xác theo hướng nhân vật nhìn
         local _, yRot, _ = localRoot.CFrame:ToOrientation()
         CenterDot.Rotation = math.deg(-yRot)
 
         -- 2. Vị trí Teacher (Absolute Map)
-        -- Trục X của game vào trục X của UI, Trục Z của game vào trục Y của UI
         local rx = math.clamp(diff.X / RADAR_RADIUS, -1, 1)
         local rz = math.clamp(diff.Z / RADAR_RADIUS, -1, 1)
 
         TeacherDot.Visible  = true
         TeacherDot.Position = UDim2.new(0.5 + rx*0.45, 0, 0.5 + rz*0.45, 0)
 
-        -- 3. Khoảng cách (Cập nhật 1-10 Đỏ, 11-20 Vàng, 21+ Xanh)
-        if dist >= 21 then
+        -- 3. Khoảng cách (Cập nhật 1-15 Đỏ, 16-20 Vàng, >20 Xanh)
+        if dist > 20 then
             WarningLabel.Text       = "SAFE  "..math.floor(dist).."st"
             WarningLabel.TextColor3 = Color3.fromRGB(100, 255, 100) -- Xanh dịu
             TeacherDot.BackgroundColor3 = Color3.fromRGB(60, 220, 60)
-        elseif dist >= 11 then
+        elseif dist >= 16 then
             WarningLabel.Text       = "CAUTION  "..math.floor(dist).."st"
             WarningLabel.TextColor3 = Color3.fromRGB(255, 215, 0) -- Vàng dịu
             TeacherDot.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
@@ -797,16 +794,15 @@ GameTab:CreateToggle({
     Name="Resize Mode", CurrentValue=false, Flag="PhoneResizeMode",
     Callback=function(val) PhoneResizeEnabled=val for _,h in ipairs(resizeHandles) do h.Visible=val end end,
 })
-GameTab:CreateInput({
-    Name="Size (Width, Height)", PlaceholderText="e.g: 200, 400",
-    RemoveTextAfterFocusLost=false,
-    Callback=function(text)
-        local x,y=text:match("(%d+)[^%d]+(%d+)")
-        if x and y then
-            TargetSizeX=tonumber(x) TargetSizeY=tonumber(y)
-            PhoneFrame.Size=UDim2.new(0,TargetSizeX,0,TargetSizeY)
-            if currentSurfaceGui then UpdatePhoneScale(currentSurfaceGui) end
-        else Rayfield:Notify({Title="Error",Content="Enter as: 200, 400",Duration=3}) end
+GameTab:CreateButton({
+    Name="Reset Phone Menu",
+    Callback=function()
+        TargetSizeX=150 TargetSizeY=300
+        PhoneFrame.Size=UDim2.new(0,TargetSizeX,0,TargetSizeY)
+        -- Đặt lại đúng vị trí góc phải bên trên mặc định
+        PhoneFrame.Position=UDim2.new(1,-TargetSizeX-10,0,60)
+        if currentSurfaceGui then UpdatePhoneScale(currentSurfaceGui) end
+        Rayfield:Notify({Title="Phone Screen",Content="Đã reset vị trí và kích thước!",Duration=2})
     end,
 })
 
