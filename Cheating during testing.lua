@@ -651,8 +651,8 @@ RadarGui.IgnoreGuiInset=true RadarGui.DisplayOrder=8 RadarGui.Parent=CoreGui
 local RadarFrame=Instance.new("Frame")
 RadarFrame.Size=UDim2.new(0,RADAR_SIZE,0,RADAR_SIZE)
 RadarFrame.Position=UDim2.new(0,10,1,-RADAR_SIZE-60)
-RadarFrame.BackgroundColor3=Color3.fromRGB(10,10,20)
-RadarFrame.BackgroundTransparency=0.2 RadarFrame.BorderSizePixel=0
+RadarFrame.BackgroundColor3=Color3.fromRGB(15,15,25)
+RadarFrame.BackgroundTransparency=0.3 RadarFrame.BorderSizePixel=0
 RadarFrame.Visible=false RadarFrame.ZIndex=10 RadarFrame.Parent=RadarGui
 Instance.new("UICorner",RadarFrame).CornerRadius=UDim.new(1,0)
 local RadarStroke=Instance.new("UIStroke") RadarStroke.Color=Color3.fromRGB(60,60,120) RadarStroke.Thickness=1.5 RadarStroke.Parent=RadarFrame
@@ -666,12 +666,15 @@ local function MakeLine(isH)
 end
 MakeLine(true) MakeLine(false)
 
--- Center dot (player)
-local CenterDot=Instance.new("Frame")
-CenterDot.Size=UDim2.new(0,6,0,6) CenterDot.AnchorPoint=Vector2.new(0.5,0.5)
-CenterDot.Position=UDim2.new(0.5,0,0.5,0) CenterDot.BackgroundColor3=Color3.fromRGB(100,200,255)
-CenterDot.BorderSizePixel=0 CenterDot.ZIndex=13 CenterDot.Parent=RadarFrame
-Instance.new("UICorner",CenterDot).CornerRadius=UDim.new(1,0)
+-- Center arrow (player)
+local CenterDot=Instance.new("TextLabel")
+CenterDot.Size=UDim2.new(0,16,0,16) CenterDot.AnchorPoint=Vector2.new(0.5,0.5)
+CenterDot.Position=UDim2.new(0.5,0,0.5,0) 
+CenterDot.BackgroundTransparency=1
+CenterDot.Text="▲" -- Biểu tượng mũi tên
+CenterDot.TextColor3=Color3.fromRGB(100,200,255)
+CenterDot.Font=Enum.Font.GothamBold CenterDot.TextSize=14
+CenterDot.BorderSizePixel=0 CenterDot.ZIndex=14 CenterDot.Parent=RadarFrame
 
 -- Teacher dot on radar
 local TeacherDot=Instance.new("Frame")
@@ -680,17 +683,18 @@ TeacherDot.Position=UDim2.new(0.5,0,0.5,0) TeacherDot.BackgroundColor3=Color3.fr
 TeacherDot.BorderSizePixel=0 TeacherDot.ZIndex=13 TeacherDot.Visible=false TeacherDot.Parent=RadarFrame
 Instance.new("UICorner",TeacherDot).CornerRadius=UDim.new(1,0)
 
--- Warning label next to radar
+-- Warning label next to radar (Đã sửa cho đỡ chói mắt)
 local WarningLabel=Instance.new("TextLabel")
 WarningLabel.Size=UDim2.new(0,140,0,36)
 WarningLabel.Position=UDim2.new(0,RADAR_SIZE+6,1,-RADAR_SIZE-60+RADAR_SIZE/2-18)
-WarningLabel.BackgroundColor3=Color3.fromRGB(10,10,20) WarningLabel.BackgroundTransparency=0.2
-WarningLabel.Text="SAFE" WarningLabel.TextColor3=Color3.fromRGB(60,220,60)
-WarningLabel.Font=Enum.Font.GothamBold WarningLabel.TextSize=13
+WarningLabel.BackgroundColor3=Color3.fromRGB(20,20,30) WarningLabel.BackgroundTransparency=0.2
+WarningLabel.Text="SAFE" WarningLabel.TextColor3=Color3.fromRGB(100,255,100)
+WarningLabel.Font=Enum.Font.GothamBold WarningLabel.TextSize=14
 WarningLabel.BorderSizePixel=0 WarningLabel.ZIndex=10 WarningLabel.Visible=false
 WarningLabel.Parent=RadarGui
 Instance.new("UICorner",WarningLabel).CornerRadius=UDim.new(0,6)
-local WStroke=Instance.new("UIStroke") WStroke.Color=Color3.fromRGB(60,220,60) WStroke.Thickness=1.5 WStroke.Parent=WarningLabel
+-- Viền chữ màu đen giúp dễ đọc hơn, không bị lóe
+local WStroke=Instance.new("UIStroke") WStroke.Color=Color3.fromRGB(0,0,0) WStroke.Thickness=1.2 WStroke.Parent=WarningLabel
 
 -- Radar drag
 local rDragging,rStart,rPos=false,nil,nil
@@ -730,39 +734,40 @@ local function StartRadar()
             TeacherDot.Visible = false
             WarningLabel.Text  = "? No Teacher"
             WarningLabel.TextColor3 = Color3.fromRGB(150,150,150)
-            WStroke.Color           = Color3.fromRGB(150,150,150)
             return
         end
 
-        local diff = tRoot.Position - localRoot.Position
+        local pPos = localRoot.Position
+        local tPos = tRoot.Position
+        local diff = tPos - pPos
         local dist = diff.Magnitude
 
-        -- Radar dot position
-        -- Project onto XZ plane relative to player facing
-        local cf       = localRoot.CFrame
-        local localDiff = cf:PointToObjectSpace(tRoot.Position)
-        local rx        = math.clamp(localDiff.X / RADAR_RADIUS, -1, 1)
-        local rz        = math.clamp(localDiff.Z / RADAR_RADIUS, -1, 1)
+        -- 1. Xoay Mũi Tên Player
+        -- Lấy góc quay Y của nhân vật và chuyển đổi sang dạng xoay của UI
+        local _, yRot, _ = localRoot.CFrame:ToOrientation()
+        CenterDot.Rotation = math.deg(-yRot)
+
+        -- 2. Vị trí Teacher (Absolute Map)
+        -- Trục X của game vào trục X của UI, Trục Z của game vào trục Y của UI
+        local rx = math.clamp(diff.X / RADAR_RADIUS, -1, 1)
+        local rz = math.clamp(diff.Z / RADAR_RADIUS, -1, 1)
 
         TeacherDot.Visible  = true
         TeacherDot.Position = UDim2.new(0.5 + rx*0.45, 0, 0.5 + rz*0.45, 0)
 
-        -- Warning level
-        if dist > 45 then
-            WarningLabel.Text       = "SAFE  >"..math.floor(dist).."st"
-            WarningLabel.TextColor3 = Color3.fromRGB(60,220,60)
-            TeacherDot.BackgroundColor3 = Color3.fromRGB(60,220,60)
-            WStroke.Color = Color3.fromRGB(60,220,60)
-        elseif dist > 18 then
+        -- 3. Khoảng cách (Cập nhật 1-10 Đỏ, 11-20 Vàng, 21+ Xanh)
+        if dist >= 21 then
+            WarningLabel.Text       = "SAFE  "..math.floor(dist).."st"
+            WarningLabel.TextColor3 = Color3.fromRGB(100, 255, 100) -- Xanh dịu
+            TeacherDot.BackgroundColor3 = Color3.fromRGB(60, 220, 60)
+        elseif dist >= 11 then
             WarningLabel.Text       = "CAUTION  "..math.floor(dist).."st"
-            WarningLabel.TextColor3 = Color3.fromRGB(255,200,0)
-            TeacherDot.BackgroundColor3 = Color3.fromRGB(255,200,0)
-            WStroke.Color = Color3.fromRGB(255,200,0)
+            WarningLabel.TextColor3 = Color3.fromRGB(255, 215, 0) -- Vàng dịu
+            TeacherDot.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
         else
             WarningLabel.Text       = "DANGER!  "..math.floor(dist).."st"
-            WarningLabel.TextColor3 = Color3.fromRGB(255,50,50)
-            TeacherDot.BackgroundColor3 = Color3.fromRGB(255,50,50)
-            WStroke.Color = Color3.fromRGB(255,50,50)
+            WarningLabel.TextColor3 = Color3.fromRGB(255, 100, 100) -- Đỏ dịu
+            TeacherDot.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
         end
     end)
 end
